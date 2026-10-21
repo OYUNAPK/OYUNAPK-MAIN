@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>17 Dilde Konuşma Challenge — Gelişmiş</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap');
+
+  :root{
+    --asphalt:#1c1f24;
+    --asphalt-2:#26292f;
+    --line-yellow:#f4b942;
+    --sign-green:#1f8a5f;
+    --sign-white:#f6f4ee;
+    --accent:#ff5d5d;
+    --text-dim:#9aa0a8;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 0%, #2a2e35 0%, transparent 45%),
+      linear-gradient(180deg, var(--asphalt) 0%, #101215 100%);
+    font-family:'DM Sans', sans-serif;
+    color:var(--sign-white);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    overflow-x:hidden;
+  }
+
+  .road-line{
+    position:fixed;
+    top:0; left:50%;
+    width:10px; height:100%;
+    transform:translateX(-50%);
+    background-image:repeating-linear-gradient(
+      to bottom, var(--line-yellow) 0 40px, transparent 40px 80px
+    );
+    opacity:.15;
+    z-index:0;
+  }
+
+  .stage{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:440px;
+    background:var(--asphalt-2);
+    border:1px solid #34383f;
+    border-radius:22px;
+    padding:28px 24px 32px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.6);
+  }
+
+  .eyebrow{
+    font-family:'Space Grotesk',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:11px;
+    color:var(--line-yellow);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:8px;height:8px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 3px rgba(255,93,93,.2);
+  }
+
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:24px;
+    line-height:1.15;
+    margin:0 0 4px;
+  }
+  .sub{
+    color:var(--text-dim);
+    font-size:14px;
+    margin-bottom:22px;
+  }
+
+  .top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+
+  .menu-btn, .speak-btn, .level-btn, .mode-btn, .skip-btn, .replay-btn, .back-btn{
+    background:none;
+    border:1px solid #3a3f47;
+    color:var(--text-dim);
+    font-family:'DM Sans',sans-serif;
+    font-size:12.5px;
+    padding:9px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    transition:border-color .15s, color .15s, background .15s;
+    white-space:nowrap;
+  }
+  .menu-btn:hover, .speak-btn:hover, .level-btn:hover, .mode-btn:hover, .skip-btn:hover, .back-btn:hover{
+    border-color:var(--line-yellow); color:var(--line-yellow);
+  }
+
+  .speak-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:10px;
+    font-size:13px;
+    padding:8px 14px;
+  }
+  .speak-btn svg{width:16px;height:16px;fill:currentColor;}
+  .speak-btn.speaking{border-color:var(--sign-green);color:var(--sign-green);}
+
+  .progress{
+    display:flex;
+    gap:4px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  .progress i{
+    flex:1;
+    min-width:10px;
+    height:4px;
+    border-radius:2px;
+    background:#3a3f47;
+    overflow:hidden;
+  }
+  .progress i.done{background:var(--sign-green);}
+  .progress i.current{background:var(--line-yellow);}
+
+  .sign{
+    background:var(--sign-white);
+    color:#15181c;
+    border-radius:14px;
+    padding:26px 20px;
+    text-align:center;
+    position:relative;
+    box-shadow: inset 0 0 0 3px #dedad0, 0 10px 30px -12px rgba(0,0,0,.5);
+    min-height:150px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    transition:transform .25s ease;
+  }
+  .sign .flag{font-size:44px; margin-bottom:8px; line-height:1;}
+  .sign .lang-name{
+    font-family:'Space Grotesk',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-size:12px;
+    color:#6b7178;
+    margin-bottom:10px;
+  }
+  .sign .phrase{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:23px;
+    line-height:1.25;
+  }
+  .sign .translit{
+    font-size:13px;
+    color:#8a8f96;
+    margin-top:4px;
+    font-style:italic;
+  }
+  .sign .meaning{
+    font-size:14px;
+    color:#555;
+    margin-top:8px;
+    font-weight:500;
+  }
+  .sign .emoji-big{font-size:64px; line-height:1; margin-bottom:8px;}
+
+  .sign.shake{ animation: shake .35s; }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
+  .sign.pulse{ animation: pulse .4s; }
+  @keyframes pulse{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.03);}
+    100%{transform:scale(1);}
+  }
+
+  .mic-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-top:22px;
+  }
+
+  .mic-btn{
+    flex-shrink:0;
+    width:64px;height:64px;
+    border-radius:50%;
+    border:none;
+    background:linear-gradient(145deg,var(--accent),#e14343);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    position:relative;
+    box-shadow:0 8px 22px -6px rgba(255,93,93,.55);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .mic-btn:active{transform:scale(.95);}
+  .mic-btn svg{width:26px;height:26px;fill:#fff;}
+  .mic-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .mic-btn.listening{
+    animation:mic-glow 1.1s ease-in-out infinite;
+  }
+  @keyframes mic-glow{
+    0%,100%{box-shadow:0 0 0 0 rgba(255,93,93,.55);}
+    50%{box-shadow:0 0 0 16px rgba(255,93,93,0);}
+  }
+
+  .status{
+    flex:1;
+    font-size:13.5px;
+    color:var(--text-dim);
+    line-height:1.4;
+  }
+  .status b{color:var(--sign-white);}
+
+  .heard-box{
+    margin-top:16px;
+    background:#15181c;
+    border:1px solid #34383f;
+    border-radius:12px;
+    padding:12px 14px;
+    min-height:20px;
+    display:none;
+  }
+  .heard-box.show{display:block;}
+  .heard-box .label{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:#5f656d;
+    margin-bottom:4px;
+  }
+  .heard-box .said{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:15px;
+    color:var(--sign-white);
+  }
+
+  .feedback{
+    margin-top:14px;
+    min-height:22px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    text-align:center;
+  }
+  .feedback.ok{color:var(--sign-green);}
+  .feedback.no{color:var(--accent);}
+
+  .footer-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:22px;
+    gap:10px;
+  }
+  .score{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    color:var(--text-dim);
+  }
+  .score b{color:var(--line-yellow);font-size:16px;}
+
+  .hint{
+    font-size:11.5px;
+    color:#5f656d;
+    text-align:center;
+    margin-top:18px;
+    line-height:1.5;
+  }
+
+  /* Screens */
+  .screen{display:none;}
+  .screen.show{display:block;}
+
+  .mode-grid, .cat-grid, .level-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:20px;
+  }
+  .mode-grid{grid-template-columns:1fr;}
+  .level-grid{grid-template-columns:1fr;}
+
+  .cat-btn, .mode-btn-card, .level-card{
+    background:var(--asphalt);
+    border:1px solid #3a3f47;
+    border-radius:14px;
+    padding:18px 12px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, transform .15s;
+    color:var(--sign-white);
+  }
+  .cat-btn:hover, .mode-btn-card:hover, .level-card:hover{
+    border-color:var(--line-yellow); transform:translateY(-2px);
+  }
+  .cat-btn .emoji, .mode-btn-card .emoji, .level-card .emoji{
+    font-size:26px; margin-bottom:6px; display:block;
+  }
+  .cat-btn .name, .mode-btn-card .name, .level-card .name{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:14px;
+  }
+  .cat-btn .desc, .mode-btn-card .desc, .level-card .desc{
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+
+  .end-screen{
+    text-align:center;
+  }
+  .end-screen .medal{font-size:56px; margin-bottom:8px;}
+  .end-screen h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:24px;
+    margin:0 0 6px;
+  }
+  .end-screen p{color:var(--text-dim); font-size:14px; margin-bottom:22px;}
+  .replay-btn{
+    background:var(--sign-green);
+    color:#fff;
+    border:none;
+    padding:13px 26px;
+    border-radius:24px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+  }
+
+  .lang-select-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:12px 0 18px;
+    justify-content:center;
+  }
+  .lang-chip{
+    background:#15181c;
+    border:1px solid #3a3f47;
+    border-radius:16px;
+    padding:6px 10px;
+    font-size:12px;
+    cursor:pointer;
+    color:var(--text-dim);
+    transition:all .15s;
+  }
+  .lang-chip.active, .lang-chip:hover{
+    border-color:var(--line-yellow);
+    color:var(--line-yellow);
+  }
+
+  .stats-row{
+    display:flex;
+    justify-content:space-around;
+    margin:12px 0;
+    font-size:13px;
+    color:var(--text-dim);
+  }
+  .stats-row b{color:var(--line-yellow); font-size:16px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .sign.shake,.sign.pulse,.mic-btn.listening{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="road-line"></div>
+
+<div class="stage">
+
+  <!-- MAIN MENU -->
+  <div class="screen show" id="mainMenu">
+    <div class="eyebrow">Canlı Challenge</div>
+    <h1>17 Dilde Dil Oyunu</h1>
+    <div class="sub">Mod seç, konuş, öğren. Mikrofon + telaffuz destekli.</div>
+    <div class="mode-grid" id="modeGrid"></div>
+    <div class="hint">Konuşma tanıma telaffuz kalitesini kesin ölçmez; yaklaşık eşleşme kullanır.</div>
+  </div>
+
+  <!-- CATEGORY SELECT (Classic 18-lang phrases) -->
+  <div class="screen" id="catScreen">
+    <div class="top-row">
+      <div>
+        <div class="eyebrow">Klasik Mod</div>
+        <h1>Hangi kelimeyle oynayalım?</h1>
+      </div>
+      <button class="back-btn" id="backFromCat">← Menü</button>
+    </div>
+    <div class="sub">Bir kategori seç, 17 dilde onu söyleyeceksin.</div>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+
+  <!-- WORD CHALLENGE LEVEL SELECT -->
+  <div class="screen" id="levelScreen">
+    <div class="top-row">
+      <div>
+        <div class="eyebrow">Kelime Challenge</div>
+        <h1>Seviye seç</h1>
+      </div>
+      <button class="back-btn" id="backFromLevel">← Menü</button>
+    </div>
+    <div class="sub">Her seviyenin puanı ayrı tutulur.</div>
+    <div class="level-grid" id="levelGrid"></div>
+  </div>
+
+  <!-- LANGUAGE SELECT (for Emoji mode) -->
+  <div class="screen" id="langSelectScreen">
+    <div class="top-row">
+      <div>
+        <div class="eyebrow">Emojiden Konuş</div>
+        <h1>Dil seç</h1>
+      </div>
+      <button class="back-btn" id="backFromLang">← Menü</button>
+    </div>
+    <div class="sub">Hangi dilde cevap vereceksin?</div>
+    <div class="lang-select-row" id="langSelectRow"></div>
+  </div>
+
+  <!-- GAME SCREEN (shared by classic, random, emoji, challenge) -->
+  <div class="screen" id="game">
+    <div class="top-row">
+      <div>
+        <div class="eyebrow" id="gameEyebrow">Canlı Challenge</div>
+        <h1 id="gameTitle">17 Dilde Teşekkür</h1>
+      </div>
+      <button class="menu-btn" id="menuBtn">☰ Menü</button>
+    </div>
+    <div class="sub" id="gameSub">Ekrandaki dili yüksek sesle söyle, mikrofon seni dinlesin.</div>
+
+    <div class="progress" id="progress"></div>
+
+    <div class="sign" id="sign">
+      <div class="flag" id="flag">🇹🇷</div>
+      <div class="lang-name" id="langName">Türkçe</div>
+      <div class="phrase" id="phrase">Teşekkür ederim</div>
+      <div class="translit" id="translit"></div>
+      <div class="meaning" id="meaning" style="display:none;"></div>
+      <button class="speak-btn" id="speakBtn" style="display:none;">
+        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        Dinle
+      </button>
+    </div>
+
+    <div class="mic-row">
+      <button class="mic-btn" id="micBtn" aria-label="Mikrofona konuş">
+        <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.92V21h2v-3.08A7 7 0 0019 11h-2z"/></svg>
+      </button>
+      <div class="status" id="statusText">Başlamak için mikrofona <b>dokun</b> ve söyle.</div>
+    </div>
+
+    <div class="heard-box" id="heardBox">
+      <div class="label">Duyduğum</div>
+      <div class="said" id="saidText"></div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="footer-row">
+      <div class="score">Skor: <b id="scoreVal">0</b>/<span id="totalVal">18</span></div>
+      <button class="skip-btn" id="skipBtn">Bunu geç →</button>
+    </div>
+
+    <div class="hint" id="hint">Konuşma tanıma için tarayıcı mikrofon izni isteyecek — kabul et ki seni duyabilsin. Telaffuz kalitesi kesin ölçülmez.</div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div class="screen" id="endScreen">
+    <div class="end-screen">
+      <div class="medal" id="medal">🏆</div>
+      <h2 id="endTitle">Harikaydın!</h2>
+      <p id="endSub">17 dili tamamladın.</p>
+      <div class="stats-row" id="endStats" style="display:none;"></div>
+      <button class="replay-btn" id="replayBtn">Ana Menüye Dön</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/*
+  Enhanced LangGame
+  - Classic 18-lang phrase categories (original)
+  - Pronunciation (speechSynthesis)
+  - Random Language Mode
+  - Emoji-to-Speech Mode
+  - Word Challenge (Easy / Medium / Hard)
+  - Expanded word pool
+*/
+
+// ========== DATA ==========
+
+const LANGS = [
+  {code:"tr-TR", name:"Türkçe", flag:"🇹🇷", short:"tr"},
+  {code:"en-US", name:"İngilizce", flag:"🇬🇧", short:"en"},
+  {code:"ja-JP", name:"Japonca", flag:"🇯🇵", short:"ja"},
+  {code:"de-DE", name:"Almanca", flag:"🇩🇪", short:"de"},
+  {code:"fr-FR", name:"Fransızca", flag:"🇫🇷", short:"fr"},
+  {code:"es-ES", name:"İspanyolca", flag:"🇪🇸", short:"es"},
+  {code:"it-IT", name:"İtalyanca", flag:"🇮🇹", short:"it"},
+  {code:"ko-KR", name:"Korece", flag:"🇰🇷", short:"ko"},
+  {code:"ru-RU", name:"Rusça", flag:"🇷🇺", short:"ru"},
+  {code:"ar-SA", name:"Arapça", flag:"🇸🇦", short:"ar"},
+  {code:"pt-PT", name:"Portekizce", flag:"🇵🇹", short:"pt"},
+  {code:"hi-IN", name:"Hintçe", flag:"🇮🇳", short:"hi"},
+  {code:"zh-CN", name:"Çince", flag:"🇨🇳", short:"zh"},
+  {code:"nl-NL", name:"Hollandaca", flag:"🇳🇱", short:"nl"},
+  {code:"el-GR", name:"Yunanca", flag:"🇬🇷", short:"el"},
+  {code:"pl-PL", name:"Lehçe", flag:"🇵🇱", short:"pl"},
+  {code:"vi-VN", name:"Vietnamca", flag:"🇻🇳", short:"vi"},];
+
+// Classic categories (kept from original, slightly cleaned)
+const classicCategories = [
+  {
+    id:"tesekkur", emoji:"🙏", name:"Teşekkür", desc:"Thank you",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Teşekkür ederim", translit:"", match:["teşekkür ederim","tesekkur ederim","teşekkürler","tesekkurler","sağol","sagol"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Thank you", translit:"", match:["thank you","thanks"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"ありがとうございます", translit:"Arigatō gozaimasu", match:["ありがとうございます","ありがとう","arigato","arigatou","arigato gozaimasu","arigatou gozaimasu"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Danke schön", translit:"", match:["danke schön","danke schon","danke"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Merci beaucoup", translit:"", match:["merci beaucoup","merci"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Muchas gracias", translit:"", match:["muchas gracias","gracias"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Grazie mille", translit:"", match:["grazie mille","grazie"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"감사합니다", translit:"Gamsahamnida", match:["감사합니다","gamsahamnida","kamsahamnida"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Спасибо", translit:"Spasibo", match:["спасибо","spasibo"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"شكراً جزيلاً", translit:"Shukran jazilan", match:["شكرا جزيلا","شكراً جزيلاً","شكرا","shukran","shukran jazilan","sukran"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Muito obrigado", translit:"", match:["muito obrigado","obrigado","obrigada"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"धन्यवाद", translit:"Dhanyavaad", match:["धन्यवाद","dhanyavaad","dhanyavad","shukriya"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"谢谢你", translit:"Xièxiè nǐ", match:["谢谢你","谢谢","xiexie ni","xiexie"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Dank je wel", translit:"", match:["dank je wel","dankjewel","dank u wel"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Ευχαριστώ πολύ", translit:"Efcharistó polý", match:["ευχαριστώ πολύ","ευχαριστω","efcharisto poly","efharisto poli"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Dziękuję bardzo", translit:"", match:["dziękuję bardzo","dziekuje bardzo","dziękuję"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Cảm ơn bạn", translit:"", match:["cảm ơn bạn","cam on ban","cam on"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"selam", emoji:"👋", name:"Selam", desc:"Hello",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Merhaba", translit:"", match:["merhaba","selam"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Hello", translit:"", match:["hello","hi","hey"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"こんにちは", translit:"Konnichiwa", match:["こんにちは","konnichiwa","konichiwa"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Hallo", translit:"", match:["hallo"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Bonjour", translit:"", match:["bonjour"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Hola", translit:"", match:["hola"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Ciao", translit:"", match:["ciao"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"안녕하세요", translit:"Annyeonghaseyo", match:["안녕하세요","annyeong haseyo","annyeonghaseyo","annyeong"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Привет", translit:"Privet", match:["привет","privet"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"مرحباً", translit:"Marhaban", match:["مرحبا","مرحباً","marhaban","marhaba"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Olá", translit:"", match:["olá","ola"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"नमस्ते", translit:"Namaste", match:["नमस्ते","namaste"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"你好", translit:"Nǐ hǎo", match:["你好","ni hao"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Hallo", translit:"", match:["hallo","hoi"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Γεια σου", translit:"Yia sou", match:["γεια σου","γεια","yia sou","ya su"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Cześć", translit:"", match:["cześć","czesc"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Xin chào", translit:"", match:["xin chào","xin chao"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"gunaydin", emoji:"🌅", name:"Günaydın", desc:"Good morning",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Günaydın", translit:"", match:["günaydın","gunaydin"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Good morning", translit:"", match:["good morning"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"おはようございます", translit:"Ohayō gozaimasu", match:["おはようございます","ohayo gozaimasu","ohayou gozaimasu","ohayo"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Guten Morgen", translit:"", match:["guten morgen"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Bonjour", translit:"", match:["bonjour","bon matin"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Buenos días", translit:"", match:["buenos días","buenos dias"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Buongiorno", translit:"", match:["buongiorno"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"좋은 아침", translit:"Joeun achim", match:["좋은 아침","joeun achim","choeun achim"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Доброе утро", translit:"Dobroye utro", match:["доброе утро","dobroye utro","dobroe utro"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"صباح الخير", translit:"Sabah al-khayr", match:["صباح الخير","sabah al khayr","sabah el kheir","sabah alkhayr"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Bom dia", translit:"", match:["bom dia"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"सुप्रभात", translit:"Suprabhat", match:["सुप्रभात","suprabhat"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"早上好", translit:"Zǎoshang hǎo", match:["早上好","zaoshang hao"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Goedemorgen", translit:"", match:["goedemorgen"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Καλημέρα", translit:"Kaliméra", match:["καλημέρα","kalimera"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Dzień dobry", translit:"", match:["dzień dobry","dzien dobry"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Chào buổi sáng", translit:"", match:["chào buổi sáng","chao buoi sang"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"gorusuruz", emoji:"👋", name:"Görüşürüz", desc:"Goodbye",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Görüşürüz", translit:"", match:["görüşürüz","gorusuruz","hoşça kal","hoscakal"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"See you", translit:"", match:["see you","bye","goodbye"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"さようなら", translit:"Sayōnara", match:["さようなら","sayonara","sayounara"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Auf Wiedersehen", translit:"", match:["auf wiedersehen","tschüss","tschuss"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Au revoir", translit:"", match:["au revoir","à bientôt","a bientot"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Adiós", translit:"", match:["adiós","adios"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Arrivederci", translit:"", match:["arrivederci","ciao"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"안녕히 가세요", translit:"Annyeonghi gaseyo", match:["안녕히 가세요","annyeonghi gaseyo","annyeong"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"До свидания", translit:"Do svidaniya", match:["до свидания","do svidaniya","dosvidaniya","poka"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"مع السلامة", translit:"Ma'a as-salama", match:["مع السلامة","maa salama","maa as salama","masalama"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Até logo", translit:"", match:["até logo","ate logo"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"अलविदा", translit:"Alvida", match:["अलविदा","alvida"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"再见", translit:"Zàijiàn", match:["再见","zaijian"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Tot ziens", translit:"", match:["tot ziens"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Αντίο", translit:"Adío", match:["αντίο","adio"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Do widzenia", translit:"", match:["do widzenia"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Tạm biệt", translit:"", match:["tạm biệt","tam biet"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"iyiis", emoji:"👏", name:"İyi İş", desc:"Good job",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"İyi iş", translit:"", match:["iyi iş","iyi is","aferin"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Good job", translit:"", match:["good job","well done","nice job"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"よくやった", translit:"Yoku yatta", match:["よくやった","yoku yatta"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Gut gemacht", translit:"", match:["gut gemacht"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Bon travail", translit:"", match:["bon travail","bien joué","bien joue"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Buen trabajo", translit:"", match:["buen trabajo"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Ottimo lavoro", translit:"", match:["ottimo lavoro","ben fatto"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"잘했어요", translit:"Jalhaesseoyo", match:["잘했어요","jalhaesseoyo","jal hesseoyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Отличная работа", translit:"Otlichnaya rabota", match:["отличная работа","otlichnaya rabota"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"عمل جيد", translit:"Amal jayed", match:["عمل جيد","amal jayed","amal jayyid"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Bom trabalho", translit:"", match:["bom trabalho"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"बहुत बढ़िया", translit:"Bahut badhiya", match:["बहुत बढ़िया","bahut badhiya"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"做得好", translit:"Zuò de hǎo", match:["做得好","zuo de hao"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Goed gedaan", translit:"", match:["goed gedaan"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Μπράβο", translit:"Bravo", match:["μπράβο","bravo"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Dobra robota", translit:"", match:["dobra robota"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Làm tốt lắm", translit:"", match:["làm tốt lắm","lam tot lam"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"nasilsin", emoji:"🤔", name:"Nasılsın", desc:"How are you",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Nasılsın", translit:"", match:["nasılsın","nasilsin","nasılsınız"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"How are you", translit:"", match:["how are you","how are you doing"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"お元気ですか", translit:"Ogenki desu ka", match:["お元気ですか","ogenki desu ka","ogenki desuka"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Wie geht's", translit:"", match:["wie geht's","wie geht es dir","wie gehts"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Comment ça va", translit:"", match:["comment ça va","comment ca va"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"¿Cómo estás?", translit:"", match:["cómo estás","como estas"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Come stai", translit:"", match:["come stai"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"어떻게 지내세요", translit:"Eotteoke jinaeseyo", match:["어떻게 지내세요","eotteoke jinaeseyo","otoke jinaeseyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Как дела", translit:"Kak dela", match:["как дела","kak dela"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"كيف حالك", translit:"Kayf halak", match:["كيف حالك","kayf halak","keef halak"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Como você está", translit:"", match:["como você está","como voce esta","tudo bem"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"आप कैसे हैं", translit:"Aap kaise hain", match:["आप कैसे हैं","aap kaise hain"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"你好吗", translit:"Nǐ hǎo ma", match:["你好吗","ni hao ma"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Hoe gaat het", translit:"", match:["hoe gaat het"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Πώς είσαι", translit:"Pos eisai", match:["πώς είσαι","pos eisai"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Jak się masz", translit:"", match:["jak się masz","jak sie masz"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Bạn khỏe không", translit:"", match:["bạn khỏe không","ban khoe khong"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"afiyet", emoji:"🍽️", name:"Afiyet Olsun", desc:"Enjoy your meal",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Afiyet olsun", translit:"", match:["afiyet olsun"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Enjoy your meal", translit:"", match:["enjoy your meal","bon appetit"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"いただきます", translit:"Itadakimasu", match:["いただきます","itadakimasu"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Guten Appetit", translit:"", match:["guten appetit"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Bon appétit", translit:"", match:["bon appétit","bon appetit"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Buen provecho", translit:"", match:["buen provecho"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Buon appetito", translit:"", match:["buon appetito"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"맛있게 드세요", translit:"Masitge deuseyo", match:["맛있게 드세요","masitge deuseyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Приятного аппетита", translit:"Priyatnogo appetita", match:["приятного аппетита","priyatnogo appetita"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"صحتين", translit:"Sahtain", match:["صحتين","sahtain","sahten"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Bom apetite", translit:"", match:["bom apetite"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"भोजन का आनंद लें", translit:"Bhojan ka aanand len", match:["भोजन का आनंद लें","bhojan ka anand len"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"请慢用", translit:"Qǐng màn yòng", match:["请慢用","qing man yong"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Eet smakelijk", translit:"", match:["eet smakelijk"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Καλή όρεξη", translit:"Kali orexi", match:["καλή όρεξη","kali orexi"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Smacznego", translit:"", match:["smacznego"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Chúc ngon miệng", translit:"", match:["chúc ngon miệng","chuc ngon mieng"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"ozur", emoji:"😔", name:"Özür Dilerim", desc:"I'm sorry",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Özür dilerim", translit:"", match:["özür dilerim","ozur dilerim","kusura bakma"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"I'm sorry", translit:"", match:["i'm sorry","im sorry","sorry"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"すみません", translit:"Sumimasen", match:["すみません","sumimasen"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Es tut mir leid", translit:"", match:["es tut mir leid","tut mir leid"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Je suis désolé", translit:"", match:["je suis désolé","je suis desole"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Lo siento", translit:"", match:["lo siento"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Mi dispiace", translit:"", match:["mi dispiace"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"죄송합니다", translit:"Joesonghamnida", match:["죄송합니다","joesonghamnida","cheosonghamnida"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Извините", translit:"Izvinite", match:["извините","izvinite"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"آسف", translit:"Asif", match:["آسف","asif","asfa"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Desculpe", translit:"", match:["desculpe"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"मुझे माफ़ करें", translit:"Mujhe maaf karen", match:["मुझे माफ़ करें","mujhe maaf karen"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"对不起", translit:"Duìbùqǐ", match:["对不起","duibuqi"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Het spijt me", translit:"", match:["het spijt me"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Συγγνώμη", translit:"Signómi", match:["συγγνώμη","signomi","sygnomi"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Przepraszam", translit:"", match:["przepraszam"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Xin lỗi", translit:"", match:["xin lỗi","xin loi"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"seviyorum", emoji:"❤️", name:"Seni Seviyorum", desc:"I love you",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Seni seviyorum", translit:"", match:["seni seviyorum"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"I love you", translit:"", match:["i love you"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"愛してる", translit:"Aishiteru", match:["愛してる","aishiteru","aishite iru"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Ich liebe dich", translit:"", match:["ich liebe dich"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Je t'aime", translit:"", match:["je t'aime","je taime"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Te quiero", translit:"", match:["te quiero","te amo"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Ti amo", translit:"", match:["ti amo"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"사랑해요", translit:"Saranghaeyo", match:["사랑해요","saranghaeyo","saranghae"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Я тебя люблю", translit:"Ya tebya lyublyu", match:["я тебя люблю","ya tebya lyublyu"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"أحبك", translit:"Uhibbuka", match:["أحبك","uhibbuka","ana ahebbak","ahebbak"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Eu te amo", translit:"", match:["eu te amo"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"मैं तुमसे प्यार करता हूँ", translit:"Main tumse pyaar karta hoon", match:["मैं तुमसे प्यार करता हूँ","main tumse pyar karta hoon"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"我爱你", translit:"Wǒ ài nǐ", match:["我爱你","wo ai ni"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Ik hou van je", translit:"", match:["ik hou van je"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Σ'αγαπώ", translit:"S'agapo", match:["σ'αγαπώ","sagapo","s'agapo"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Kocham cię", translit:"", match:["kocham cię","kocham cie"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Anh yêu em", translit:"", match:["anh yêu em","anh yeu em","em yêu anh"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"tebrikler", emoji:"🎉", name:"Tebrikler", desc:"Congratulations",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Tebrikler", translit:"", match:["tebrikler","tebrik ederim"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Congratulations", translit:"", match:["congratulations","congrats"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"おめでとうございます", translit:"Omedetou gozaimasu", match:["おめでとうございます","omedetou gozaimasu","omedeto gozaimasu"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Herzlichen Glückwunsch", translit:"", match:["herzlichen glückwunsch","herzlichen gluckwunsch"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Félicitations", translit:"", match:["félicitations","felicitations"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Felicidades", translit:"", match:["felicidades"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Congratulazioni", translit:"", match:["congratulazioni"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"축하합니다", translit:"Chukhahamnida", match:["축하합니다","chukhahamnida","chukahamnida"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Поздравляю", translit:"Pozdravlyayu", match:["поздравляю","pozdravlyayu"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"مبروك", translit:"Mabrouk", match:["مبروك","mabrouk","mabruk"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Parabéns", translit:"", match:["parabéns","parabens"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"बधाई हो", translit:"Badhai ho", match:["बधाई हो","badhai ho"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"恭喜你", translit:"Gōngxǐ nǐ", match:["恭喜你","gongxi ni"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Gefeliciteerd", translit:"", match:["gefeliciteerd"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Συγχαρητήρια", translit:"Sygharitiria", match:["συγχαρητήρια","sygharitiria"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Gratulacje", translit:"", match:["gratulacje"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Chúc mừng", translit:"", match:["chúc mừng","chuc mung"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"iyigeceler", emoji:"🌙", name:"İyi Geceler", desc:"Good night",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"İyi geceler", translit:"", match:["iyi geceler"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Good night", translit:"", match:["good night","goodnight"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"おやすみなさい", translit:"Oyasuminasai", match:["おやすみなさい","oyasuminasai","oyasumi"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Gute Nacht", translit:"", match:["gute nacht"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Bonne nuit", translit:"", match:["bonne nuit"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Buenas noches", translit:"", match:["buenas noches"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Buonanotte", translit:"", match:["buonanotte"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"안녕히 주무세요", translit:"Annyeonghi jumuseyo", match:["안녕히 주무세요","annyeonghi jumuseyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Спокойной ночи", translit:"Spokoynoy nochi", match:["спокойной ночи","spokoynoy nochi"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"تصبح على خير", translit:"Tusbih ala khayr", match:["تصبح على خير","tusbih ala khayr","tisbah ala khair"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Boa noite", translit:"", match:["boa noite"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"शुभ रात्रि", translit:"Shubh raatri", match:["शुभ रात्रि","shubh raatri","shubh ratri"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"晚安", translit:"Wǎn ān", match:["晚安","wan an"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Welterusten", translit:"", match:["welterusten"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Καληνύχτα", translit:"Kaliníchta", match:["καληνύχτα","kalinichta"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Dobranoc", translit:"", match:["dobranoc"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Chúc ngủ ngon", translit:"", match:["chúc ngủ ngon","chuc ngu ngon"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"hosgeldin", emoji:"🚪", name:"Hoş Geldin", desc:"Welcome",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Hoş geldin", translit:"", match:["hoş geldin","hos geldin","hoşgeldiniz"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Welcome", translit:"", match:["welcome"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"ようこそ", translit:"Yōkoso", match:["ようこそ","yokoso","youkoso"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Willkommen", translit:"", match:["willkommen"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Bienvenue", translit:"", match:["bienvenue"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Bienvenido", translit:"", match:["bienvenido","bienvenida"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Benvenuto", translit:"", match:["benvenuto","benvenuta"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"환영합니다", translit:"Hwanyeonghamnida", match:["환영합니다","hwanyeonghamnida"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Добро пожаловать", translit:"Dobro pozhalovat", match:["добро пожаловать","dobro pozhalovat"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"أهلاً وسهلاً", translit:"Ahlan wa sahlan", match:["أهلا وسهلا","ahlan wa sahlan","ahlan"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Bem-vindo", translit:"", match:["bem-vindo","bem vindo"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"स्वागत है", translit:"Swagat hai", match:["स्वागत है","swagat hai"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"欢迎", translit:"Huānyíng", match:["欢迎","huanying"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Welkom", translit:"", match:["welkom"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Καλώς όρισες", translit:"Kalós órises", match:["καλώς όρισες","kalos orises"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Witamy", translit:"", match:["witamy"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Chào mừng", translit:"", match:["chào mừng","chao mung"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"gecmisolsun", emoji:"🩹", name:"Geçmiş Olsun", desc:"Get well soon",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Geçmiş olsun", translit:"", match:["geçmiş olsun","gecmis olsun"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Get well soon", translit:"", match:["get well soon"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"お大事に", translit:"Odaiji ni", match:["お大事に","odaiji ni","odaijini"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Gute Besserung", translit:"", match:["gute besserung"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Bon rétablissement", translit:"", match:["bon rétablissement","bon retablissement"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Que te mejores", translit:"", match:["que te mejores"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Guarisci presto", translit:"", match:["guarisci presto"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"빨리 나으세요", translit:"Ppalli naeuseyo", match:["빨리 나으세요","ppalli naeuseyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Выздоравливай", translit:"Vyzdoravlivay", match:["выздоравливай","vyzdoravlivay"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"سلامتك", translit:"Salamtak", match:["سلامتك","salamtak","salamtek"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Melhoras", translit:"", match:["melhoras","fica bom"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"जल्दी ठीक हो जाओ", translit:"Jaldi theek ho jao", match:["जल्दी ठीक हो जाओ","jaldi theek ho jao"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"早日康复", translit:"Zǎorì kāngfù", match:["早日康复","zaori kangfu"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Beterschap", translit:"", match:["beterschap"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Περαστικά", translit:"Perastiká", match:["περαστικά","perastika"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Szybkiego powrotu do zdrowia", translit:"", match:["szybkiego powrotu do zdrowia","szybkiego powrotu"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Mau khỏe lại nhé", translit:"", match:["mau khỏe lại nhé","mau khoe lai nhe"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"evet", emoji:"👍", name:"Evet", desc:"Yes",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Evet", translit:"", match:["evet"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Yes", translit:"", match:["yes","yeah"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"はい", translit:"Hai", match:["はい","hai"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Ja", translit:"", match:["ja"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Oui", translit:"", match:["oui"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Sí", translit:"", match:["sí","si"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Sì", translit:"", match:["sì","si"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"네", translit:"Ne", match:["네","ne","예","ye"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Да", translit:"Da", match:["да","da"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"نعم", translit:"Naam", match:["نعم","naam","naem"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Sim", translit:"", match:["sim"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"हाँ", translit:"Haan", match:["हाँ","haan","han"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"是", translit:"Shì", match:["是","shi","对","dui"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Ja", translit:"", match:["ja"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Ναι", translit:"Ne", match:["ναι","ne"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Tak", translit:"", match:["tak"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Vâng", translit:"", match:["vâng","vang","có","co"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"hayir", emoji:"👎", name:"Hayır", desc:"No",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Hayır", translit:"", match:["hayır","hayir"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"No", translit:"", match:["no"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"いいえ", translit:"Iie", match:["いいえ","iie"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Nein", translit:"", match:["nein"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Non", translit:"", match:["non"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"No", translit:"", match:["no"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"No", translit:"", match:["no"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"아니요", translit:"Aniyo", match:["아니요","aniyo","ani"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Нет", translit:"Net", match:["нет","net"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"لا", translit:"La", match:["لا","la"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Não", translit:"", match:["não","nao"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"नहीं", translit:"Nahin", match:["नहीं","nahin","nahi"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"不是", translit:"Bùshì", match:["不是","bushi","不","bu"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Nee", translit:"", match:["nee"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Όχι", translit:"Óchi", match:["όχι","ochi"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Nie", translit:"", match:["nie"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Không", translit:"", match:["không","khong"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"tamam", emoji:"👌", name:"Tamam", desc:"Okay",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Tamam", translit:"", match:["tamam"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Okay", translit:"", match:["okay","ok"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"わかりました", translit:"Wakarimashita", match:["わかりました","wakarimashita"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"In Ordnung", translit:"", match:["in ordnung","okay"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"D'accord", translit:"", match:["d'accord","daccord"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Vale", translit:"", match:["vale","de acuerdo"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Va bene", translit:"", match:["va bene"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"알겠어요", translit:"Algesseoyo", match:["알겠어요","algesseoyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Хорошо", translit:"Khorosho", match:["хорошо","khorosho"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"حسناً", translit:"Hasanan", match:["حسنا","حسناً","hasanan","tayeb"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Está bem", translit:"", match:["está bem","esta bem","tudo bem"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"ठीक है", translit:"Theek hai", match:["ठीक है","theek hai","thik hai"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"好的", translit:"Hǎo de", match:["好的","haode"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Oké", translit:"", match:["oké","oke"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Εντάξει", translit:"Endáxei", match:["εντάξει","endaxei"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Dobrze", translit:"", match:["dobrze"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Được rồi", translit:"", match:["được rồi","duoc roi"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"bilmem", emoji:"🤷", name:"Bilmem", desc:"I don't know",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Bilmem", translit:"", match:["bilmem","bilmiyorum"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"I don't know", translit:"", match:["i don't know","i dont know"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"わかりません", translit:"Wakarimasen", match:["わかりません","wakarimasen"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Ich weiß nicht", translit:"", match:["ich weiß nicht","ich weiss nicht"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Je ne sais pas", translit:"", match:["je ne sais pas"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"No sé", translit:"", match:["no sé","no se"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Non lo so", translit:"", match:["non lo so"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"몰라요", translit:"Mollayo", match:["몰라요","mollayo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Не знаю", translit:"Ne znayu", match:["не знаю","ne znayu"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"لا أعرف", translit:"La a'rif", match:["لا أعرف","la arif","la aarif"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Não sei", translit:"", match:["não sei","nao sei"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"मुझे नहीं पता", translit:"Mujhe nahin pata", match:["मुझे नहीं पता","mujhe nahin pata"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"我不知道", translit:"Wǒ bù zhīdào", match:["我不知道","wo bu zhidao"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Ik weet het niet", translit:"", match:["ik weet het niet"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Δεν ξέρω", translit:"Den xéro", match:["δεν ξέρω","den xero"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Nie wiem", translit:"", match:["nie wiem"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Tôi không biết", translit:"", match:["tôi không biết","toi khong biet"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"belki", emoji:"🤞", name:"Belki", desc:"Maybe",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Belki", translit:"", match:["belki"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Maybe", translit:"", match:["maybe"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"たぶん", translit:"Tabun", match:["たぶん","tabun"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Vielleicht", translit:"", match:["vielleicht"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Peut-être", translit:"", match:["peut-être","peut etre"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Quizás", translit:"", match:["quizás","quizas"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Forse", translit:"", match:["forse"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"아마도", translit:"Amado", match:["아마도","amado"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Может быть", translit:"Mozhet byt", match:["может быть","mozhet byt"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"ربما", translit:"Rubbama", match:["ربما","rubbama"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Talvez", translit:"", match:["talvez"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"शायद", translit:"Shayad", match:["शायद","shayad"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"也许", translit:"Yěxǔ", match:["也许","yexu"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Misschien", translit:"", match:["misschien"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Ίσως", translit:"Ísos", match:["ίσως","isos"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Może", translit:"", match:["może","moze"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Có lẽ", translit:"", match:["có lẽ","co le"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"lutfen", emoji:"🙏", name:"Lütfen", desc:"Please",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Lütfen", translit:"", match:["lütfen","lutfen"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Please", translit:"", match:["please"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"お願いします", translit:"Onegaishimasu", match:["お願いします","onegaishimasu","onegai shimasu"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Bitte", translit:"", match:["bitte"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"S'il vous plaît", translit:"", match:["s'il vous plaît","sil vous plait"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Por favor", translit:"", match:["por favor"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Per favore", translit:"", match:["per favore"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"부탁해요", translit:"Butakhaeyo", match:["부탁해요","butakhaeyo","jebal"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Пожалуйста", translit:"Pozhaluysta", match:["пожалуйста","pozhaluysta"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"من فضلك", translit:"Min fadlik", match:["من فضلك","min fadlik","min fadlak"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Por favor", translit:"", match:["por favor"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"कृपया", translit:"Kripya", match:["कृपया","kripya"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"请", translit:"Qǐng", match:["请","qing"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Alsjeblieft", translit:"", match:["alsjeblieft"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Παρακαλώ", translit:"Parakaló", match:["παρακαλώ","parakalo"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Proszę", translit:"", match:["proszę","prosze"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Làm ơn", translit:"", match:["làm ơn","lam on"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"bekle", emoji:"✋", name:"Bekle", desc:"Wait",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Bekle", translit:"", match:["bekle","bekleyin"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Wait", translit:"", match:["wait"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"待って", translit:"Matte", match:["待って","matte"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Warte", translit:"", match:["warte"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Attends", translit:"", match:["attends"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Espera", translit:"", match:["espera"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Aspetta", translit:"", match:["aspetta"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"기다려요", translit:"Gidaryeoyo", match:["기다려요","gidaryeoyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Подожди", translit:"Podozhdi", match:["подожди","podozhdi"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"انتظر", translit:"Intazir", match:["انتظر","intazir","istani"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Espera", translit:"", match:["espera"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"रुको", translit:"Ruko", match:["रुको","ruko"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"等一下", translit:"Děng yíxià", match:["等一下","deng yixia"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Wacht", translit:"", match:["wacht"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Περίμενε", translit:"Perímene", match:["περίμενε","perimene"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Czekaj", translit:"", match:["czekaj"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Chờ đã", translit:"", match:["chờ đã","cho da"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"dikkat", emoji:"⚠️", name:"Dikkat", desc:"Watch out",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Dikkat", translit:"", match:["dikkat","dikkat et"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Watch out", translit:"", match:["watch out","be careful"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"気をつけて", translit:"Ki wo tsukete", match:["気をつけて","ki wo tsukete","kiwotsukete"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Vorsicht", translit:"", match:["vorsicht"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Attention", translit:"", match:["attention"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Cuidado", translit:"", match:["cuidado"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Attenzione", translit:"", match:["attenzione"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"조심해요", translit:"Josimhaeyo", match:["조심해요","josimhaeyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Осторожно", translit:"Ostorozhno", match:["осторожно","ostorozhno"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"احترس", translit:"Ihtaris", match:["احترس","ihtaris"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Cuidado", translit:"", match:["cuidado"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"सावधान", translit:"Savdhan", match:["सावधान","savdhan"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"小心", translit:"Xiǎoxīn", match:["小心","xiaoxin"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Pas op", translit:"", match:["pas op"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Πρόσεχε", translit:"Prósexe", match:["πρόσεχε","prosexe"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Uwaga", translit:"", match:["uwaga"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Cẩn thận", translit:"", match:["cẩn thận","can than"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"yardim", emoji:"🆘", name:"Yardım", desc:"Help",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Yardım", translit:"", match:["yardım","yardim"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Help", translit:"", match:["help"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"助けて", translit:"Tasukete", match:["助けて","tasukete"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Hilfe", translit:"", match:["hilfe"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Aide", translit:"", match:["aide","au secours"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Ayuda", translit:"", match:["ayuda"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Aiuto", translit:"", match:["aiuto"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"도와주세요", translit:"Dowajuseyo", match:["도와주세요","dowajuseyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Помощь", translit:"Pomoshch", match:["помощь","pomoshch"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"مساعدة", translit:"Musaada", match:["مساعدة","musaada"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Ajuda", translit:"", match:["ajuda"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"मदद", translit:"Madad", match:["मदद","madad"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"帮助", translit:"Bāngzhù", match:["帮助","bangzhu"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Help", translit:"", match:["help"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Βοήθεια", translit:"Voítheia", match:["βοήθεια","voitheia"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Pomoc", translit:"", match:["pomoc"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Giúp đỡ", translit:"", match:["giúp đỡ","giup do"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"anladim", emoji:"💡", name:"Anladım", desc:"Got it",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Anladım", translit:"", match:["anladım","anladim"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Got it", translit:"", match:["got it","i understand"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"わかった", translit:"Wakatta", match:["わかった","wakatta"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Ich verstehe", translit:"", match:["ich verstehe"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"J'ai compris", translit:"", match:["j'ai compris","jai compris"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Entiendo", translit:"", match:["entiendo"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Ho capito", translit:"", match:["ho capito"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"이해했어요", translit:"Ihaehaesseoyo", match:["이해했어요","ihaehaesseoyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Понял", translit:"Ponyal", match:["понял","ponyal"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"فهمت", translit:"Fahimt", match:["فهمت","fahimt"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Entendi", translit:"", match:["entendi"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"समझ गया", translit:"Samajh gaya", match:["समझ गया","samajh gaya"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"我明白了", translit:"Wǒ míngbáile", match:["我明白了","wo mingbaile"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Ik snap het", translit:"", match:["ik snap het"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Κατάλαβα", translit:"Katálava", match:["κατάλαβα","katalava"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Rozumiem", translit:"", match:["rozumiem"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Tôi hiểu rồi", translit:"", match:["tôi hiểu rồi","toi hieu roi"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"harika", emoji:"🌟", name:"Harika", desc:"Awesome",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Harika", translit:"", match:["harika"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Awesome", translit:"", match:["awesome"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"素晴らしい", translit:"Subarashii", match:["素晴らしい","subarashii"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Fantastisch", translit:"", match:["fantastisch"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Génial", translit:"", match:["génial","genial"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"Genial", translit:"", match:["genial"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Fantastico", translit:"", match:["fantastico"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"최고예요", translit:"Choegoyeyo", match:["최고예요","choegoyeyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Отлично", translit:"Otlichno", match:["отлично","otlichno"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"رائع", translit:"Raa'i", match:["رائع","raai","raiaa"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Incrível", translit:"", match:["incrível","incrivel"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"शानदार", translit:"Shaandaar", match:["शानदार","shaandaar"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"太棒了", translit:"Tài bàng le", match:["太棒了","tai bang le"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Geweldig", translit:"", match:["geweldig"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Καταπληκτικό", translit:"Katapliktikó", match:["καταπληκτικό","katapliktiko"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Wspaniale", translit:"", match:["wspaniale"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Tuyệt vời", translit:"", match:["tuyệt vời","tuyet voi"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"eminmisin", emoji:"🤨", name:"Emin Misin", desc:"Are you sure",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Emin misin", translit:"", match:["emin misin"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Are you sure", translit:"", match:["are you sure"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"本当ですか", translit:"Hontou desu ka", match:["本当ですか","hontou desu ka","honto desu ka"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Bist du sicher", translit:"", match:["bist du sicher"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Tu es sûr", translit:"", match:["tu es sûr","tu es sur"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"¿Estás seguro?", translit:"", match:["estás seguro","estas seguro"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Sei sicuro", translit:"", match:["sei sicuro"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"확실해요", translit:"Hwaksilhaeyo", match:["확실해요","hwaksilhaeyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Ты уверен", translit:"Ty uveren", match:["ты уверен","ty uveren"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"هل أنت متأكد", translit:"Hal anta muta'akkid", match:["هل أنت متأكد","hal anta mutaakkid"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Tem certeza", translit:"", match:["tem certeza"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"क्या तुम्हें यकीन है", translit:"Kya tumhein yakeen hai", match:["क्या तुम्हें यकीन है","kya tumhein yakeen hai"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"你确定吗", translit:"Nǐ quèdìng ma", match:["你确定吗","ni queding ma"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Weet je het zeker", translit:"", match:["weet je het zeker"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Είσαι σίγουρος", translit:"Íse sígouros", match:["είσαι σίγουρος","eise sigouros"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Jesteś pewien", translit:"", match:["jesteś pewien","jestes pewien"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Bạn có chắc không", translit:"", match:["bạn có chắc không","ban co chac khong"], code:"vi-VN"},
+    ]
+  },
+  {
+    id:"meraketme", emoji:"😌", name:"Merak Etme", desc:"Don't worry",
+    items:[
+      {flag:"🇹🇷", lang:"Türkçe", phrase:"Merak etme", translit:"", match:["merak etme"], code:"tr-TR"},
+      {flag:"🇬🇧", lang:"İngilizce", phrase:"Don't worry", translit:"", match:["don't worry","dont worry"], code:"en-US"},
+      {flag:"🇯🇵", lang:"Japonca", phrase:"心配しないで", translit:"Shinpai shinaide", match:["心配しないで","shinpai shinaide"], code:"ja-JP"},
+      {flag:"🇩🇪", lang:"Almanca", phrase:"Keine Sorge", translit:"", match:["keine sorge"], code:"de-DE"},
+      {flag:"🇫🇷", lang:"Fransızca", phrase:"Ne t'inquiète pas", translit:"", match:["ne t'inquiète pas","ne tinquiete pas"], code:"fr-FR"},
+      {flag:"🇪🇸", lang:"İspanyolca", phrase:"No te preocupes", translit:"", match:["no te preocupes"], code:"es-ES"},
+      {flag:"🇮🇹", lang:"İtalyanca", phrase:"Non preoccuparti", translit:"", match:["non preoccuparti"], code:"it-IT"},
+      {flag:"🇰🇷", lang:"Korece", phrase:"걱정하지 마세요", translit:"Geokjeonghaji maseyo", match:["걱정하지 마세요","geokjeonghaji maseyo"], code:"ko-KR"},
+      {flag:"🇷🇺", lang:"Rusça", phrase:"Не волнуйся", translit:"Ne volnuysya", match:["не волнуйся","ne volnuysya"], code:"ru-RU"},
+      {flag:"🇸🇦", lang:"Arapça", phrase:"لا تقلق", translit:"La taqlaq", match:["لا تقلق","la taqlaq"], code:"ar-SA"},
+      {flag:"🇵🇹", lang:"Portekizce", phrase:"Não se preocupe", translit:"", match:["não se preocupe","nao se preocupe"], code:"pt-PT"},
+      {flag:"🇮🇳", lang:"Hintçe", phrase:"चिंता मत करो", translit:"Chinta mat karo", match:["चिंता मत करो","chinta mat karo"], code:"hi-IN"},
+      {flag:"🇨🇳", lang:"Çince", phrase:"别担心", translit:"Bié dānxīn", match:["别担心","bie danxin"], code:"zh-CN"},
+      {flag:"🇳🇱", lang:"Hollandaca", phrase:"Maak je geen zorgen", translit:"", match:["maak je geen zorgen"], code:"nl-NL"},
+      {flag:"🇬🇷", lang:"Yunanca", phrase:"Μην ανησυχείς", translit:"Min anisychís", match:["μην ανησυχείς","min anisychis"], code:"el-GR"},
+      {flag:"🇵🇱", lang:"Lehçe", phrase:"Nie martw się", translit:"", match:["nie martw się","nie martw sie"], code:"pl-PL"},
+      {flag:"🇻🇳", lang:"Vietnamca", phrase:"Đừng lo lắng", translit:"", match:["đừng lo lắng","dung lo lang"], code:"vi-VN"},
+    ]
+  },
+];
+
+// Expanded word pool for Random + Challenge + Emoji
+// Each entry: {tr, en, ja, de, fr, es, it, ko, ru, ar, pt, hi, zh, nl, el, pl, vi, emoji?, match?}
+// match is optional extra alternatives for speech recognition (per lang short code)
+
+const WORD_POOL = [
+  // === Selamlaşma / Günlük ===
+  {tr:"Merhaba", en:"Hello", ja:"こんにちは", de:"Hallo", fr:"Bonjour", es:"Hola", it:"Ciao", ko:"안녕하세요", ru:"Привет", ar:"مرحبا", pt:"Olá", hi:"नमस्ते", zh:"你好", nl:"Hallo", el:"Γεια", pl:"Cześć", vi:"Xin chào", emoji:"👋", cat:"selam"},
+  {tr:"Teşekkürler", en:"Thank you", ja:"ありがとう", de:"Danke", fr:"Merci", es:"Gracias", it:"Grazie", ko:"감사합니다", ru:"Спасибо", ar:"شكرا", pt:"Obrigado", hi:"धन्यवाद", zh:"谢谢", nl:"Dank je", el:"Ευχαριστώ", pl:"Dziękuję", vi:"Cảm ơn", emoji:"🙏", cat:"selam"},
+  {tr:"Lütfen", en:"Please", ja:"お願いします", de:"Bitte", fr:"S'il vous plaît", es:"Por favor", it:"Per favore", ko:"부탁해요", ru:"Пожалуйста", ar:"من فضلك", pt:"Por favor", hi:"कृपया", zh:"请", nl:"Alsjeblieft", el:"Παρακαλώ", pl:"Proszę", vi:"Làm ơn", emoji:"🙏", cat:"selam"},
+  {tr:"Evet", en:"Yes", ja:"はい", de:"Ja", fr:"Oui", es:"Sí", it:"Sì", ko:"네", ru:"Да", ar:"نعم", pt:"Sim", hi:"हाँ", zh:"是", nl:"Ja", el:"Ναι", pl:"Tak", vi:"Vâng", emoji:"👍", cat:"selam"},
+  {tr:"Hayır", en:"No", ja:"いいえ", de:"Nein", fr:"Non", es:"No", it:"No", ko:"아니요", ru:"Нет", ar:"لا", pt:"Não", hi:"नहीं", zh:"不是", nl:"Nee", el:"Όχι", pl:"Nie", vi:"Không", emoji:"👎", cat:"selam"},
+  {tr:"Tamam", en:"Okay", ja:"わかりました", de:"Okay", fr:"D'accord", es:"Vale", it:"Va bene", ko:"알겠어요", ru:"Хорошо", ar:"حسنا", pt:"Está bem", hi:"ठीक है", zh:"好的", nl:"Oké", el:"Εντάξει", pl:"Dobrze", vi:"Được rồi", emoji:"👌", cat:"selam"},
+  {tr:"Güle güle", en:"Goodbye", ja:"さようなら", de:"Tschüss", fr:"Au revoir", es:"Adiós", it:"Arrivederci", ko:"안녕히 가세요", ru:"До свидания", ar:"مع السلامة", pt:"Adeus", hi:"अलविदा", zh:"再见", nl:"Tot ziens", el:"Αντίο", pl:"Do widzenia", vi:"Tạm biệt", emoji:"👋", cat:"selam"},
+  {tr:"Günaydın", en:"Good morning", ja:"おはよう", de:"Guten Morgen", fr:"Bonjour", es:"Buenos días", it:"Buongiorno", ko:"좋은 아침", ru:"Доброе утро", ar:"صباح الخير", pt:"Bom dia", hi:"सुप्रभात", zh:"早上好", nl:"Goedemorgen", el:"Καλημέρα", pl:"Dzień dobry", vi:"Chào buổi sáng", emoji:"🌅", cat:"selam"},
+  {tr:"İyi geceler", en:"Good night", ja:"おやすみ", de:"Gute Nacht", fr:"Bonne nuit", es:"Buenas noches", it:"Buonanotte", ko:"안녕히 주무세요", ru:"Спокойной ночи", ar:"تصبح على خير", pt:"Boa noite", hi:"शुभ रात्रि", zh:"晚安", nl:"Welterusten", el:"Καληνύχτα", pl:"Dobranoc", vi:"Chúc ngủ ngon", emoji:"🌙", cat:"selam"},
+  {tr:"Nasılsın", en:"How are you", ja:"元気ですか", de:"Wie geht's", fr:"Comment ça va", es:"Cómo estás", it:"Come stai", ko:"어떻게 지내세요", ru:"Как дела", ar:"كيف حالك", pt:"Como vai", hi:"आप कैसे हैं", zh:"你好吗", nl:"Hoe gaat het", el:"Πώς είσαι", pl:"Jak się masz", vi:"Bạn khỏe không", emoji:"🤔", cat:"selam"},
+  {tr:"Hoş geldin", en:"Welcome", ja:"ようこそ", de:"Willkommen", fr:"Bienvenue", es:"Bienvenido", it:"Benvenuto", ko:"환영합니다", ru:"Добро пожаловать", ar:"أهلا", pt:"Bem-vindo", hi:"स्वागत है", zh:"欢迎", nl:"Welkom", el:"Καλώς ήρθες", pl:"Witamy", vi:"Chào mừng", emoji:"🚪", cat:"selam"},
+  {tr:"Özür dilerim", en:"Sorry", ja:"すみません", de:"Entschuldigung", fr:"Désolé", es:"Lo siento", it:"Mi dispiace", ko:"죄송합니다", ru:"Извините", ar:"آسف", pt:"Desculpe", hi:"माफ़ करें", zh:"对不起", nl:"Sorry", el:"Συγγνώμη", pl:"Przepraszam", vi:"Xin lỗi", emoji:"😔", cat:"selam"},
+  {tr:"Afiyet olsun", en:"Enjoy your meal", ja:"いただきます", de:"Guten Appetit", fr:"Bon appétit", es:"Buen provecho", it:"Buon appetito", ko:"맛있게 드세요", ru:"Приятного аппетита", ar:"صحتين", pt:"Bom apetite", hi:"भोजन का आनंद", zh:"请慢用", nl:"Eet smakelijk", el:"Καλή όρεξη", pl:"Smacznego", vi:"Chúc ngon miệng", emoji:"🍽️", cat:"selam"},
+  {tr:"Tebrikler", en:"Congratulations", ja:"おめでとう", de:"Glückwunsch", fr:"Félicitations", es:"Felicidades", it:"Congratulazioni", ko:"축하합니다", ru:"Поздравляю", ar:"مبروك", pt:"Parabéns", hi:"बधाई हो", zh:"恭喜", nl:"Gefeliciteerd", el:"Συγχαρητήρια", pl:"Gratulacje", vi:"Chúc mừng", emoji:"🎉", cat:"selam"},
+  {tr:"Seni seviyorum", en:"I love you", ja:"愛してる", de:"Ich liebe dich", fr:"Je t'aime", es:"Te quiero", it:"Ti amo", ko:"사랑해요", ru:"Я тебя люблю", ar:"أحبك", pt:"Eu te amo", hi:"मैं तुमसे प्यार करता हूँ", zh:"我爱你", nl:"Ik hou van je", el:"Σ'αγαπώ", pl:"Kocham cię", vi:"Anh yêu em", emoji:"❤️", cat:"selam"},
+  {tr:"Yardım", en:"Help", ja:"助けて", de:"Hilfe", fr:"Aide", es:"Ayuda", it:"Aiuto", ko:"도와주세요", ru:"Помощь", ar:"مساعدة", pt:"Ajuda", hi:"मदद", zh:"帮助", nl:"Help", el:"Βοήθεια", pl:"Pomoc", vi:"Giúp đỡ", emoji:"🆘", cat:"selam"},
+  {tr:"Dikkat", en:"Watch out", ja:"気をつけて", de:"Vorsicht", fr:"Attention", es:"Cuidado", it:"Attenzione", ko:"조심해요", ru:"Осторожно", ar:"احترس", pt:"Cuidado", hi:"सावधान", zh:"小心", nl:"Pas op", el:"Πρόσεχε", pl:"Uwaga", vi:"Cẩn thận", emoji:"⚠️", cat:"selam"},
+  {tr:"Bekle", en:"Wait", ja:"待って", de:"Warte", fr:"Attends", es:"Espera", it:"Aspetta", ko:"기다려요", ru:"Подожди", ar:"انتظر", pt:"Espera", hi:"रुको", zh:"等一下", nl:"Wacht", el:"Περίμενε", pl:"Czekaj", vi:"Chờ đã", emoji:"✋", cat:"selam"},
+  {tr:"Anladım", en:"Got it", ja:"わかった", de:"Verstehe", fr:"Compris", es:"Entiendo", it:"Capito", ko:"이해했어요", ru:"Понял", ar:"فهمت", pt:"Entendi", hi:"समझ गया", zh:"明白了", nl:"Ik snap het", el:"Κατάλαβα", pl:"Rozumiem", vi:"Tôi hiểu", emoji:"💡", cat:"selam"},
+  {tr:"Bilmiyorum", en:"I don't know", ja:"わかりません", de:"Ich weiß nicht", fr:"Je ne sais pas", es:"No sé", it:"Non lo so", ko:"몰라요", ru:"Не знаю", ar:"لا أعرف", pt:"Não sei", hi:"मुझे नहीं पता", zh:"我不知道", nl:"Ik weet het niet", el:"Δεν ξέρω", pl:"Nie wiem", vi:"Tôi không biết", emoji:"🤷", cat:"selam"},
+
+  // === Yiyecek ===
+  {tr:"Elma", en:"Apple", ja:"りんご", de:"Apfel", fr:"Pomme", es:"Manzana", it:"Mela", ko:"사과", ru:"Яблоко", ar:"تفاحة", pt:"Maçã", hi:"सेब", zh:"苹果", nl:"Appel", el:"Μήλο", pl:"Jabłko", vi:"Táo", emoji:"🍎", cat:"yiyecek"},
+  {tr:"Ekmek", en:"Bread", ja:"パン", de:"Brot", fr:"Pain", es:"Pan", it:"Pane", ko:"빵", ru:"Хлеб", ar:"خبز", pt:"Pão", hi:"रोटी", zh:"面包", nl:"Brood", el:"Ψωμί", pl:"Chleb", vi:"Bánh mì", emoji:"🍞", cat:"yiyecek"},
+  {tr:"Su", en:"Water", ja:"水", de:"Wasser", fr:"Eau", es:"Agua", it:"Acqua", ko:"물", ru:"Вода", ar:"ماء", pt:"Água", hi:"पानी", zh:"水", nl:"Water", el:"Νερό", pl:"Woda", vi:"Nước", emoji:"💧", cat:"yiyecek"},
+  {tr:"Kahve", en:"Coffee", ja:"コーヒー", de:"Kaffee", fr:"Café", es:"Café", it:"Caffè", ko:"커피", ru:"Кофе", ar:"قهوة", pt:"Café", hi:"कॉफी", zh:"咖啡", nl:"Koffie", el:"Καφές", pl:"Kawa", vi:"Cà phê", emoji:"☕", cat:"yiyecek"},
+  {tr:"Çay", en:"Tea", ja:"お茶", de:"Tee", fr:"Thé", es:"Té", it:"Tè", ko:"차", ru:"Чай", ar:"شاي", pt:"Chá", hi:"चाय", zh:"茶", nl:"Thee", el:"Τσάι", pl:"Herbata", vi:"Trà", emoji:"🍵", cat:"yiyecek"},
+  {tr:"Pizza", en:"Pizza", ja:"ピザ", de:"Pizza", fr:"Pizza", es:"Pizza", it:"Pizza", ko:"피자", ru:"Пицца", ar:"بيتزا", pt:"Pizza", hi:"पिज़्ज़ा", zh:"披萨", nl:"Pizza", el:"Πίτσα", pl:"Pizza", vi:"Pizza", emoji:"🍕", cat:"yiyecek"},
+  {tr:"Süt", en:"Milk", ja:"牛乳", de:"Milch", fr:"Lait", es:"Leche", it:"Latte", ko:"우유", ru:"Молоко", ar:"حليب", pt:"Leite", hi:"दूध", zh:"牛奶", nl:"Melk", el:"Γάλα", pl:"Mleko", vi:"Sữa", emoji:"🥛", cat:"yiyecek"},
+  {tr:"Balık", en:"Fish", ja:"魚", de:"Fisch", fr:"Poisson", es:"Pescado", it:"Pesce", ko:"생선", ru:"Рыба", ar:"سمك", pt:"Peixe", hi:"मछली", zh:"鱼", nl:"Vis", el:"Ψάρι", pl:"Ryba", vi:"Cá", emoji:"🐟", cat:"yiyecek"},
+  {tr:"Pirinç", en:"Rice", ja:"ご飯", de:"Reis", fr:"Riz", es:"Arroz", it:"Riso", ko:"밥", ru:"Рис", ar:"أرز", pt:"Arroz", hi:"चावल", zh:"米饭", nl:"Rijst", el:"Ρύζι", pl:"Ryż", vi:"Cơm", emoji:"🍚", cat:"yiyecek"},
+  {tr:"Yumurta", en:"Egg", ja:"卵", de:"Ei", fr:"Œuf", es:"Huevo", it:"Uovo", ko:"계란", ru:"Яйцо", ar:"بيضة", pt:"Ovo", hi:"अंडा", zh:"鸡蛋", nl:"Ei", el:"Αυγό", pl:"Jajko", vi:"Trứng", emoji:"🥚", cat:"yiyecek"},
+  {tr:"Peynir", en:"Cheese", ja:"チーズ", de:"Käse", fr:"Fromage", es:"Queso", it:"Formaggio", ko:"치즈", ru:"Сыр", ar:"جبن", pt:"Queijo", hi:"पनीर", zh:"奶酪", nl:"Kaas", el:"Τυρί", pl:"Ser", vi:"Phô mai", emoji:"🧀", cat:"yiyecek"},
+  {tr:"Muz", en:"Banana", ja:"バナナ", de:"Banane", fr:"Banane", es:"Plátano", it:"Banana", ko:"바나나", ru:"Банан", ar:"موز", pt:"Banana", hi:"केला", zh:"香蕉", nl:"Banaan", el:"Μπανάνα", pl:"Banan", vi:"Chuối", emoji:"🍌", cat:"yiyecek"},
+  {tr:"Portakal", en:"Orange", ja:"オレンジ", de:"Orange", fr:"Orange", es:"Naranja", it:"Arancia", ko:"오렌지", ru:"Апельсин", ar:"برتقال", pt:"Laranja", hi:"संतरा", zh:"橙子", nl:"Sinaasappel", el:"Πορτοκάλι", pl:"Pomarańcza", vi:"Cam", emoji:"🍊", cat:"yiyecek"},
+  {tr:"Çikolata", en:"Chocolate", ja:"チョコレート", de:"Schokolade", fr:"Chocolat", es:"Chocolate", it:"Cioccolato", ko:"초콜릿", ru:"Шоколад", ar:"شوكولاتة", pt:"Chocolate", hi:"चॉकलेट", zh:"巧克力", nl:"Chocolade", el:"Σοκολάτα", pl:"Czekolada", vi:"Sô cô la", emoji:"🍫", cat:"yiyecek"},
+  {tr:"Dondurma", en:"Ice cream", ja:"アイスクリーム", de:"Eis", fr:"Glace", es:"Helado", it:"Gelato", ko:"아이스크림", ru:"Мороженое", ar:"آيس كريم", pt:"Sorvete", hi:"आइसक्रीम", zh:"冰淇淋", nl:"IJs", el:"Παγωτό", pl:"Lody", vi:"Kem", emoji:"🍦", cat:"yiyecek"},
+  {tr:"Et", en:"Meat", ja:"肉", de:"Fleisch", fr:"Viande", es:"Carne", it:"Carne", ko:"고기", ru:"Мясо", ar:"لحم", pt:"Carne", hi:"मांस", zh:"肉", nl:"Vlees", el:"Κρέας", pl:"Mięso", vi:"Thịt", emoji:"🥩", cat:"yiyecek"},
+  {tr:"Sebze", en:"Vegetable", ja:"野菜", de:"Gemüse", fr:"Légume", es:"Verdura", it:"Verdura", ko:"야채", ru:"Овощ", ar:"خضروات", pt:"Legume", hi:"सब्जी", zh:"蔬菜", nl:"Groente", el:"Λαχανικό", pl:"Warzywo", vi:"Rau", emoji:"🥬", cat:"yiyecek"},
+  {tr:"Şeker", en:"Sugar", ja:"砂糖", de:"Zucker", fr:"Sucre", es:"Azúcar", it:"Zucchero", ko:"설탕", ru:"Сахар", ar:"سكر", pt:"Açúcar", hi:"चीनी", zh:"糖", nl:"Suiker", el:"Ζάχαρη", pl:"Cukier", vi:"Đường", emoji:"🍬", cat:"yiyecek"},
+
+  // === Hayvanlar ===
+  {tr:"Kedi", en:"Cat", ja:"猫", de:"Katze", fr:"Chat", es:"Gato", it:"Gatto", ko:"고양이", ru:"Кошка", ar:"قطة", pt:"Gato", hi:"बिल्ली", zh:"猫", nl:"Kat", el:"Γάτα", pl:"Kot", vi:"Mèo", emoji:"🐱", cat:"hayvan"},
+  {tr:"Köpek", en:"Dog", ja:"犬", de:"Hund", fr:"Chien", es:"Perro", it:"Cane", ko:"개", ru:"Собака", ar:"كلب", pt:"Cão", hi:"कुत्ता", zh:"狗", nl:"Hond", el:"Σκύλος", pl:"Pies", vi:"Chó", emoji:"🐶", cat:"hayvan"},
+  {tr:"Kuş", en:"Bird", ja:"鳥", de:"Vogel", fr:"Oiseau", es:"Pájaro", it:"Uccello", ko:"새", ru:"Птица", ar:"طائر", pt:"Pássaro", hi:"पक्षी", zh:"鸟", nl:"Vogel", el:"Πουλί", pl:"Ptak", vi:"Chim", emoji:"🐦", cat:"hayvan"},
+  {tr:"At", en:"Horse", ja:"馬", de:"Pferd", fr:"Cheval", es:"Caballo", it:"Cavallo", ko:"말", ru:"Лошадь", ar:"حصان", pt:"Cavalo", hi:"घोड़ा", zh:"马", nl:"Paard", el:"Άλογο", pl:"Koń", vi:"Ngựa", emoji:"🐴", cat:"hayvan"},
+  {tr:"Fil", en:"Elephant", ja:"象", de:"Elefant", fr:"Éléphant", es:"Elefante", it:"Elefante", ko:"코끼리", ru:"Слон", ar:"فيل", pt:"Elefante", hi:"हाथी", zh:"大象", nl:"Olifant", el:"Ελέφαντας", pl:"Słoń", vi:"Voi", emoji:"🐘", cat:"hayvan"},
+  {tr:"Aslan", en:"Lion", ja:"ライオン", de:"Löwe", fr:"Lion", es:"León", it:"Leone", ko:"사자", ru:"Лев", ar:"أسد", pt:"Leão", hi:"शेर", zh:"狮子", nl:"Leeuw", el:"Λιοντάρι", pl:"Lew", vi:"Sư tử", emoji:"🦁", cat:"hayvan"},
+  {tr:"Tavşan", en:"Rabbit", ja:"うさぎ", de:"Hase", fr:"Lapin", es:"Conejo", it:"Coniglio", ko:"토끼", ru:"Кролик", ar:"أرنب", pt:"Coelho", hi:"खरगोश", zh:"兔子", nl:"Konijn", el:"Κουνέλι", pl:"Królik", vi:"Thỏ", emoji:"🐰", cat:"hayvan"},
+  {tr:"Ayı", en:"Bear", ja:"熊", de:"Bär", fr:"Ours", es:"Oso", it:"Orso", ko:"곰", ru:"Медведь", ar:"دب", pt:"Urso", hi:"भालू", zh:"熊", nl:"Beer", el:"Αρκούδα", pl:"Niedźwiedź", vi:"Gấu", emoji:"🐻", cat:"hayvan"},
+  {tr:"Maymun", en:"Monkey", ja:"猿", de:"Affe", fr:"Singe", es:"Mono", it:"Scimmia", ko:"원숭이", ru:"Обезьяна", ar:"قرد", pt:"Macaco", hi:"बंदर", zh:"猴子", nl:"Aap", el:"Πίθηκος", pl:"Małpa", vi:"Khỉ", emoji:"🐵", cat:"hayvan"},
+  {tr:"Yılan", en:"Snake", ja:"蛇", de:"Schlange", fr:"Serpent", es:"Serpiente", it:"Serpente", ko:"뱀", ru:"Змея", ar:"ثعبان", pt:"Cobra", hi:"साँप", zh:"蛇", nl:"Slang", el:"Φίδι", pl:"Wąż", vi:"Rắn", emoji:"🐍", cat:"hayvan"},
+  {tr:"Kurbağa", en:"Frog", ja:"カエル", de:"Frosch", fr:"Grenouille", es:"Rana", it:"Rana", ko:"개구리", ru:"Лягушка", ar:"ضفدع", pt:"Sapo", hi:"मेंढक", zh:"青蛙", nl:"Kikker", el:"Βάτραχος", pl:"Żaba", vi:"Ếch", emoji:"🐸", cat:"hayvan"},
+  {tr:"Penguen", en:"Penguin", ja:"ペンギン", de:"Pinguin", fr:"Pingouin", es:"Pingüino", it:"Pinguino", ko:"펭귄", ru:"Пингвин", ar:"بطريق", pt:"Pinguim", hi:"पेंगुइन", zh:"企鹅", nl:"Pinguïn", el:"Πιγκουίνος", pl:"Pingwin", vi:"Chim cánh cụt", emoji:"🐧", cat:"hayvan"},
+
+  // === Nesneler ===
+  {tr:"Kitap", en:"Book", ja:"本", de:"Buch", fr:"Livre", es:"Libro", it:"Libro", ko:"책", ru:"Книга", ar:"كتاب", pt:"Livro", hi:"किताब", zh:"书", nl:"Boek", el:"Βιβλίο", pl:"Książka", vi:"Sách", emoji:"📖", cat:"nesne"},
+  {tr:"Araba", en:"Car", ja:"車", de:"Auto", fr:"Voiture", es:"Coche", it:"Macchina", ko:"자동차", ru:"Машина", ar:"سيارة", pt:"Carro", hi:"कार", zh:"汽车", nl:"Auto", el:"Αυτοκίνητο", pl:"Samochód", vi:"Xe hơi", emoji:"🚗", cat:"nesne"},
+  {tr:"Telefon", en:"Phone", ja:"電話", de:"Telefon", fr:"Téléphone", es:"Teléfono", it:"Telefono", ko:"전화", ru:"Телефон", ar:"هاتف", pt:"Telefone", hi:"फ़ोन", zh:"电话", nl:"Telefoon", el:"Τηλέφωνο", pl:"Telefon", vi:"Điện thoại", emoji:"📱", cat:"nesne"},
+  {tr:"Kapı", en:"Door", ja:"ドア", de:"Tür", fr:"Porte", es:"Puerta", it:"Porta", ko:"문", ru:"Дверь", ar:"باب", pt:"Porta", hi:"दरवाज़ा", zh:"门", nl:"Deur", el:"Πόρτα", pl:"Drzwi", vi:"Cửa", emoji:"🚪", cat:"nesne"},
+  {tr:"Masa", en:"Table", ja:"テーブル", de:"Tisch", fr:"Table", es:"Mesa", it:"Tavolo", ko:"탁자", ru:"Стол", ar:"طاولة", pt:"Mesa", hi:"मेज़", zh:"桌子", nl:"Tafel", el:"Τραπέζι", pl:"Stół", vi:"Bàn", emoji:"🪑", cat:"nesne"},
+  {tr:"Kalem", en:"Pen", ja:"ペン", de:"Stift", fr:"Stylo", es:"Bolígrafo", it:"Penna", ko:"펜", ru:"Ручка", ar:"قلم", pt:"Caneta", hi:"कलम", zh:"笔", nl:"Pen", el:"Στυλό", pl:"Długopis", vi:"Bút", emoji:"🖊️", cat:"nesne"},
+  {tr:"Saat", en:"Clock", ja:"時計", de:"Uhr", fr:"Horloge", es:"Reloj", it:"Orologio", ko:"시계", ru:"Часы", ar:"ساعة", pt:"Relógio", hi:"घड़ी", zh:"钟", nl:"Klok", el:"Ρολόι", pl:"Zegar", vi:"Đồng hồ", emoji:"🕐", cat:"nesne"},
+  {tr:"Anahtar", en:"Key", ja:"鍵", de:"Schlüssel", fr:"Clé", es:"Llave", it:"Chiave", ko:"열쇠", ru:"Ключ", ar:"مفتاح", pt:"Chave", hi:"चाबी", zh:"钥匙", nl:"Sleutel", el:"Κλειδί", pl:"Klucz", vi:"Chìa khóa", emoji:"🔑", cat:"nesne"},
+  {tr:"Çanta", en:"Bag", ja:"バッグ", de:"Tasche", fr:"Sac", es:"Bolso", it:"Borsa", ko:"가방", ru:"Сумка", ar:"حقيبة", pt:"Bolsa", hi:"बैग", zh:"包", nl:"Tas", el:"Τσάντα", pl:"Torba", vi:"Túi", emoji:"👜", cat:"nesne"},
+  {tr:"Gözlük", en:"Glasses", ja:"眼鏡", de:"Brille", fr:"Lunettes", es:"Gafas", it:"Occhiali", ko:"안경", ru:"Очки", ar:"نظارات", pt:"Óculos", hi:"चश्मा", zh:"眼镜", nl:"Bril", el:"Γυαλιά", pl:"Okulary", vi:"Kính", emoji:"👓", cat:"nesne"},
+  {tr:"Sandelye", en:"Chair", ja:"椅子", de:"Stuhl", fr:"Chaise", es:"Silla", it:"Sedia", ko:"의자", ru:"Стул", ar:"كرسي", pt:"Cadeira", hi:"कुर्सी", zh:"椅子", nl:"Stoel", el:"Καρέκλα", pl:"Krzesło", vi:"Ghế", emoji:"💺", cat:"nesne"},
+  {tr:"Pencere", en:"Window", ja:"窓", de:"Fenster", fr:"Fenêtre", es:"Ventana", it:"Finestra", ko:"창문", ru:"Окно", ar:"نافذة", pt:"Janela", hi:"खिड़की", zh:"窗户", nl:"Raam", el:"Παράθυρο", pl:"Okno", vi:"Cửa sổ", emoji:"🪟", cat:"nesne"},
+  {tr:"Bilgisayar", en:"Computer", ja:"パソコン", de:"Computer", fr:"Ordinateur", es:"Ordenador", it:"Computer", ko:"컴퓨터", ru:"Компьютер", ar:"حاسوب", pt:"Computador", hi:"कंप्यूटर", zh:"电脑", nl:"Computer", el:"Υπολογιστής", pl:"Komputer", vi:"Máy tính", emoji:"💻", cat:"nesne"},
+  {tr:"Lamba", en:"Lamp", ja:"ランプ", de:"Lampe", fr:"Lampe", es:"Lámpara", it:"Lampada", ko:"램프", ru:"Лампа", ar:"مصباح", pt:"Lâmpada", hi:"लैंप", zh:"灯", nl:"Lamp", el:"Λάμπα", pl:"Lampa", vi:"Đèn", emoji:"💡", cat:"nesne"},
+
+  // === Sayılar ===
+  {tr:"Bir", en:"One", ja:"一", de:"Eins", fr:"Un", es:"Uno", it:"Uno", ko:"하나", ru:"Один", ar:"واحد", pt:"Um", hi:"एक", zh:"一", nl:"Een", el:"Ένα", pl:"Jeden", vi:"Một", emoji:"1️⃣", cat:"sayi"},
+  {tr:"İki", en:"Two", ja:"二", de:"Zwei", fr:"Deux", es:"Dos", it:"Due", ko:"둘", ru:"Два", ar:"اثنان", pt:"Dois", hi:"दो", zh:"二", nl:"Twee", el:"Δύο", pl:"Dwa", vi:"Hai", emoji:"2️⃣", cat:"sayi"},
+  {tr:"Üç", en:"Three", ja:"三", de:"Drei", fr:"Trois", es:"Tres", it:"Tre", ko:"셋", ru:"Три", ar:"ثلاثة", pt:"Três", hi:"तीन", zh:"三", nl:"Drie", el:"Τρία", pl:"Trzy", vi:"Ba", emoji:"3️⃣", cat:"sayi"},
+  {tr:"Dört", en:"Four", ja:"四", de:"Vier", fr:"Quatre", es:"Cuatro", it:"Quattro", ko:"넷", ru:"Четыре", ar:"أربعة", pt:"Quatro", hi:"चार", zh:"四", nl:"Vier", el:"Τέσσερα", pl:"Cztery", vi:"Bốn", emoji:"4️⃣", cat:"sayi"},
+  {tr:"Beş", en:"Five", ja:"五", de:"Fünf", fr:"Cinq", es:"Cinco", it:"Cinque", ko:"다섯", ru:"Пять", ar:"خمسة", pt:"Cinco", hi:"पाँच", zh:"五", nl:"Vijf", el:"Πέντε", pl:"Pięć", vi:"Năm", emoji:"5️⃣", cat:"sayi"},
+  {tr:"Altı", en:"Six", ja:"六", de:"Sechs", fr:"Six", es:"Seis", it:"Sei", ko:"여섯", ru:"Шесть", ar:"ستة", pt:"Seis", hi:"छह", zh:"六", nl:"Zes", el:"Έξι", pl:"Sześć", vi:"Sáu", emoji:"6️⃣", cat:"sayi"},
+  {tr:"Yedi", en:"Seven", ja:"七", de:"Sieben", fr:"Sept", es:"Siete", it:"Sette", ko:"일곱", ru:"Семь", ar:"سبعة", pt:"Sete", hi:"सात", zh:"七", nl:"Zeven", el:"Επτά", pl:"Siedem", vi:"Bảy", emoji:"7️⃣", cat:"sayi"},
+  {tr:"Sekiz", en:"Eight", ja:"八", de:"Acht", fr:"Huit", es:"Ocho", it:"Otto", ko:"여덟", ru:"Восемь", ar:"ثمانية", pt:"Oito", hi:"आठ", zh:"八", nl:"Acht", el:"Οκτώ", pl:"Osiem", vi:"Tám", emoji:"8️⃣", cat:"sayi"},
+  {tr:"Dokuz", en:"Nine", ja:"九", de:"Neun", fr:"Neuf", es:"Nueve", it:"Nove", ko:"아홉", ru:"Девять", ar:"تسعة", pt:"Nove", hi:"नौ", zh:"九", nl:"Negen", el:"Εννέα", pl:"Dziewięć", vi:"Chín", emoji:"9️⃣", cat:"sayi"},
+  {tr:"On", en:"Ten", ja:"十", de:"Zehn", fr:"Dix", es:"Diez", it:"Dieci", ko:"열", ru:"Десять", ar:"عشرة", pt:"Dez", hi:"दस", zh:"十", nl:"Tien", el:"Δέκα", pl:"Dziesięć", vi:"Mười", emoji:"🔟", cat:"sayi"},
+
+  // === Duygular ===
+  {tr:"Mutlu", en:"Happy", ja:"嬉しい", de:"Glücklich", fr:"Heureux", es:"Feliz", it:"Felice", ko:"행복해요", ru:"Счастливый", ar:"سعيد", pt:"Feliz", hi:"खुश", zh:"开心", nl:"Blij", el:"Χαρούμενος", pl:"Szczęśliwy", vi:"Vui", emoji:"😊", cat:"duygu"},
+  {tr:"Üzgün", en:"Sad", ja:"悲しい", de:"Traurig", fr:"Triste", es:"Triste", it:"Triste", ko:"슬퍼요", ru:"Грустный", ar:"حزين", pt:"Triste", hi:"दुखी", zh:"伤心", nl:"Verdrietig", el:"Λυπημένος", pl:"Smutny", vi:"Buồn", emoji:"😢", cat:"duygu"},
+  {tr:"Kızgın", en:"Angry", ja:"怒っている", de:"Wütend", fr:"En colère", es:"Enfadado", it:"Arrabbiato", ko:"화나요", ru:"Злой", ar:"غاضب", pt:"Zangado", hi:"गुस्सा", zh:"生气", nl:"Boos", el:"Θυμωμένος", pl:"Zły", vi:"Tức giận", emoji:"😠", cat:"duygu"},
+  {tr:"Yorgun", en:"Tired", ja:"疲れた", de:"Müde", fr:"Fatigué", es:"Cansado", it:"Stanco", ko:"피곤해요", ru:"Усталый", ar:"متعب", pt:"Cansado", hi:"थका हुआ", zh:"累", nl:"Moe", el:"Κουρασμένος", pl:"Zmęczony", vi:"Mệt", emoji:"😴", cat:"duygu"},
+  {tr:"Aşk", en:"Love", ja:"愛", de:"Liebe", fr:"Amour", es:"Amor", it:"Amore", ko:"사랑", ru:"Любовь", ar:"حب", pt:"Amor", hi:"प्यार", zh:"爱", nl:"Liefde", el:"Αγάπη", pl:"Miłość", vi:"Yêu", emoji:"❤️", cat:"duygu"},
+  {tr:"Korkmuş", en:"Scared", ja:"怖い", de:"Angst", fr:"Effrayé", es:"Asustado", it:"Spaventato", ko:"무서워요", ru:"Испуганный", ar:"خائف", pt:"Assustado", hi:"डरा हुआ", zh:"害怕", nl:"Bang", el:"Φοβισμένος", pl:"Przestraszony", vi:"Sợ", emoji:"😨", cat:"duygu"},
+  {tr:"Şaşırmış", en:"Surprised", ja:"驚いた", de:"Überrascht", fr:"Surpris", es:"Sorprendido", it:"Sorpreso", ko:"놀랐어요", ru:"Удивлённый", ar:"متفاجئ", pt:"Surpreso", hi:"हैरान", zh:"惊讶", nl:"Verrast", el:"Έκπληκτος", pl:"Zaskoczony", vi:"Ngạc nhiên", emoji:"😲", cat:"duygu"},
+  {tr:"Gururlu", en:"Proud", ja:"誇り", de:"Stolz", fr:"Fier", es:"Orgulloso", it:"Orgoglioso", ko:"자랑스러워요", ru:"Гордый", ar:"فخور", pt:"Orgulhoso", hi:"गर्व", zh:"骄傲", nl:"Trots", el:"Περήφανος", pl:"Dumny", vi:"Tự hào", emoji:"🦁", cat:"duygu"},
+];
+
+
+// ========== STATE ==========
+let mode = null; // 'classic' | 'random' | 'emoji' | 'challenge'
+let rounds = [];
+let currentCat = null;
+let idx = 0;
+let score = 0;
+let listening = false;
+let busy = false;
+let selectedLang = null; // for emoji mode
+let challengeLevel = null; // 'easy' | 'medium' | 'hard'
+let usedIndices = new Set(); // avoid repeats in random/challenge
+
+// Challenge separate scores
+const challengeScores = {easy:{score:0,total:0}, medium:{score:0,total:0}, hard:{score:0,total:0}};
+
+// DOM
+const mainMenu = document.getElementById('mainMenu');
+const catScreen = document.getElementById('catScreen');
+const levelScreen = document.getElementById('levelScreen');
+const langSelectScreen = document.getElementById('langSelectScreen');
+const gameEl = document.getElementById('game');
+const endScreen = document.getElementById('endScreen');
+
+const flagEl = document.getElementById('flag');
+const langEl = document.getElementById('langName');
+const phraseEl = document.getElementById('phrase');
+const translitEl = document.getElementById('translit');
+const meaningEl = document.getElementById('meaning');
+const signEl = document.getElementById('sign');
+const micBtn = document.getElementById('micBtn');
+const statusText = document.getElementById('statusText');
+const feedback = document.getElementById('feedback');
+const scoreVal = document.getElementById('scoreVal');
+const totalVal = document.getElementById('totalVal');
+const progress = document.getElementById('progress');
+const skipBtn = document.getElementById('skipBtn');
+const replayBtn = document.getElementById('replayBtn');
+const medal = document.getElementById('medal');
+const endTitle = document.getElementById('endTitle');
+const endSub = document.getElementById('endSub');
+const gameTitle = document.getElementById('gameTitle');
+const gameEyebrow = document.getElementById('gameEyebrow');
+const gameSub = document.getElementById('gameSub');
+const hint = document.getElementById('hint');
+const heardBox = document.getElementById('heardBox');
+const saidText = document.getElementById('saidText');
+const menuBtn = document.getElementById('menuBtn');
+const speakBtn = document.getElementById('speakBtn');
+const modeGrid = document.getElementById('modeGrid');
+const catGrid = document.getElementById('catGrid');
+const levelGrid = document.getElementById('levelGrid');
+const langSelectRow = document.getElementById('langSelectRow');
+
+// ========== SCREENS ==========
+function showScreen(el){
+  [mainMenu, catScreen, levelScreen, langSelectScreen, gameEl, endScreen].forEach(s => s.classList.remove('show'));
+  el.classList.add('show');
+}
+
+function goToMenu(){
+  if(listening && recognition){ try{ recognition.abort(); }catch(e){} }
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  mode = null;
+  showScreen(mainMenu);
+}
+
+// ========== BUILD MENUS ==========
+function buildMainMenu(){
+  modeGrid.innerHTML = '';
+  const modes = [
+    {id:'classic', emoji:'🗣️', name:'Klasik 18 Dil', desc:'Bir ifadeyi 17 dilde söyle'},
+    {id:'random', emoji:'🎲', name:'Rastgele Dil', desc:'Rastgele dil + kelime, telaffuz dinle'},
+    {id:'emoji', emoji:'😀', name:'Emojiden Konuş', desc:'Emojiyi gör, dilde söyle'},
+    {id:'challenge', emoji:'📚', name:'Kelime Challenge', desc:'Kolay / Orta / Zor seviyeler'},
+  ];
+  modes.forEach(m => {
+    const btn = document.createElement('div');
+    btn.className = 'mode-btn-card';
+    btn.innerHTML = `<span class="emoji">${m.emoji}</span><div class="name">${m.name}</div><div class="desc">${m.desc}</div>`;
+    btn.addEventListener('click', () => startMode(m.id));
+    modeGrid.appendChild(btn);
+  });
+}
+
+function buildCatScreen(){
+  catGrid.innerHTML = '';
+  classicCategories.forEach(cat => {
+    const btn = document.createElement('div');
+    btn.className = 'cat-btn';
+    btn.innerHTML = `<span class="emoji">${cat.emoji}</span><div class="name">${cat.name}</div><div class="desc">${cat.desc}</div>`;
+    btn.addEventListener('click', () => startClassic(cat));
+    catGrid.appendChild(btn);
+  });
+}
+
+function buildLevelScreen(){
+  levelGrid.innerHTML = '';
+  const levels = [
+    {id:'easy', emoji:'🟢', name:'Kolay', desc:'Kelime + telaffuz + Türkçe okunuş. Puan ayrı.'},
+    {id:'medium', emoji:'🟡', name:'Orta', desc:'Kelime + telaffuz. Okunuş yok.'},
+    {id:'hard', emoji:'🔴', name:'Zor', desc:'Sadece kelime. İpucu / anlam / okunuş yok.'},
+  ];
+  levels.forEach(lv => {
+    const s = challengeScores[lv.id];
+    const btn = document.createElement('div');
+    btn.className = 'level-card';
+    btn.innerHTML = `<span class="emoji">${lv.emoji}</span><div class="name">${lv.name}</div><div class="desc">${lv.desc}<br>Skor: ${s.score}/${s.total}</div>`;
+    btn.addEventListener('click', () => startChallenge(lv.id));
+    levelGrid.appendChild(btn);
+  });
+}
+
+function buildLangSelect(){
+  langSelectRow.innerHTML = '';
+  LANGS.forEach(l => {
+    const chip = document.createElement('button');
+    chip.className = 'lang-chip';
+    chip.textContent = l.flag + ' ' + l.name;
+    chip.addEventListener('click', () => {
+      selectedLang = l;
+      startEmojiMode();
+    });
+    langSelectRow.appendChild(chip);
+  });
+}
+
+// ========== MODE START ==========
+function startMode(m){
+  mode = m;
+  if(m === 'classic'){
+    showScreen(catScreen);
+  } else if(m === 'random'){
+    startRandom();
+  } else if(m === 'emoji'){
+    showScreen(langSelectScreen);
+  } else if(m === 'challenge'){
+    buildLevelScreen();
+    showScreen(levelScreen);
+  }
+}
+
+function startClassic(cat){
+  currentCat = cat;
+  rounds = cat.items.map(it => ({
+    ...it,
+    type:'classic',
+    targetPhrase: it.phrase,
+    matchList: it.match,
+    langCode: it.code || 'tr-TR',
+  }));
+  idx = 0; score = 0; busy = false; usedIndices.clear();
+  gameTitle.textContent = '17 Dilde ' + cat.name;
+  gameEyebrow.textContent = 'Klasik Mod';
+  gameSub.textContent = 'Ekrandaki dili yüksek sesle söyle, mikrofon seni dinlesin.';
+  totalVal.textContent = rounds.length;
+  showScreen(gameEl);
+  renderRound();
+}
+
+function startRandom(){
+  mode = 'random';
+  rounds = [];
+  usedIndices.clear();
+  // Build 12 random unique items
+  const pool = [...WORD_POOL];
+  shuffle(pool);
+  const take = Math.min(12, pool.length);
+  for(let i=0;i<take;i++){
+    const w = pool[i];
+    const langIdx = Math.floor(Math.random() * LANGS.length);
+    const lang = LANGS[langIdx];
+    const key = lang.short;
+    const phrase = w[key] || w.en;
+    rounds.push({
+      type:'random',
+      flag: lang.flag,
+      lang: lang.name,
+      phrase: phrase,
+      translit: '',
+      meaning: w.tr,
+      matchList: [phrase, w.en, w.tr].filter(Boolean),
+      langCode: lang.code,
+      wordObj: w,
+    });
+  }
+  idx = 0; score = 0; busy = false;
+  gameTitle.textContent = 'Rastgele Dil';
+  gameEyebrow.textContent = 'Rastgele Mod';
+  gameSub.textContent = 'Dili ve kelimeyi gör, telaffuzu dinle, sonra söyle.';
+  totalVal.textContent = rounds.length;
+  showScreen(gameEl);
+  renderRound();
+}
+
+function startEmojiMode(){
+  mode = 'emoji';
+  rounds = [];
+  usedIndices.clear();
+  const pool = WORD_POOL.filter(w => w.emoji);
+  shuffle(pool);
+  const take = Math.min(10, pool.length);
+  for(let i=0;i<take;i++){
+    const w = pool[i];
+    const key = selectedLang.short;
+    const phrase = w[key] || w.en;
+    rounds.push({
+      type:'emoji',
+      flag: selectedLang.flag,
+      lang: selectedLang.name,
+      phrase: phrase,
+      emoji: w.emoji,
+      translit: '',
+      meaning: w.tr,
+      matchList: [phrase, w.en, w.tr].filter(Boolean),
+      langCode: selectedLang.code,
+      wordObj: w,
+    });
+  }
+  idx = 0; score = 0; busy = false;
+  gameTitle.textContent = 'Emojiden Konuş — ' + selectedLang.name;
+  gameEyebrow.textContent = 'Emoji Modu';
+  gameSub.textContent = 'Emojinin ne olduğunu seçtiğin dilde söyle. Önceden gösterilmez.';
+  totalVal.textContent = rounds.length;
+  showScreen(gameEl);
+  renderRound();
+}
+
+function startChallenge(level){
+  mode = 'challenge';
+  challengeLevel = level;
+  rounds = [];
+  usedIndices.clear();
+  const pool = [...WORD_POOL];
+  shuffle(pool);
+  const take = Math.min(10, pool.length);
+  for(let i=0;i<take;i++){
+    const w = pool[i];
+    // Random non-Turkish language for challenge target
+    let langIdx = Math.floor(Math.random() * (LANGS.length - 1)) + 1; // skip tr sometimes, or include
+    const lang = LANGS[langIdx];
+    const key = lang.short;
+    const phrase = w[key] || w.en;
+    rounds.push({
+      type:'challenge',
+      level: level,
+      flag: lang.flag,
+      lang: lang.name,
+      phrase: phrase,
+      translit: level === 'easy' ? (w.tr) : '',
+      meaning: level === 'easy' ? w.tr : '',
+      matchList: [phrase, w.en, w.tr].filter(Boolean),
+      langCode: lang.code,
+      wordObj: w,
+    });
+  }
+  idx = 0; score = 0; busy = false;
+  const names = {easy:'Kolay', medium:'Orta', hard:'Zor'};
+  gameTitle.textContent = 'Kelime Challenge — ' + names[level];
+  gameEyebrow.textContent = 'Challenge';
+  gameSub.textContent = level === 'hard'
+    ? 'Sadece kelimeyi gör. Anlam veya okunuş yok — tahmin et ve söyle.'
+    : (level === 'medium' ? 'Kelimeyi gör, telaffuzu dinle, söyle. Okunuş yok.' : 'Kelime + okunuş + telaffuz. Söyle!');
+  totalVal.textContent = rounds.length;
+  showScreen(gameEl);
+  renderRound();
+}
+
+// ========== RENDER ==========
+function buildProgress(){
+  progress.innerHTML = '';
+  rounds.forEach((_,i) => {
+    const bar = document.createElement('i');
+    if(i < idx) bar.classList.add('done');
+    else if(i === idx) bar.classList.add('current');
+    progress.appendChild(bar);
+  });
+}
+
+function renderRound(){
+  const r = rounds[idx];
+  if(!r){ showEnd(); return; }
+
+  // Emoji mode: big emoji, hide phrase until after attempt? No - prompt says don't show answer names beforehand.
+  // So show only emoji + "Bu nedir?" and lang.
+  if(r.type === 'emoji'){
+    flagEl.style.display = 'none';
+    langEl.textContent = r.lang;
+    phraseEl.innerHTML = `<span class="emoji-big">${r.emoji}</span>`;
+    translitEl.textContent = '';
+    meaningEl.style.display = 'none';
+    speakBtn.style.display = 'none'; // no spoiler
+  } else if(r.type === 'challenge' && r.level === 'hard'){
+    flagEl.style.display = 'block';
+    flagEl.textContent = r.flag;
+    langEl.textContent = r.lang;
+    phraseEl.textContent = r.phrase;
+    translitEl.textContent = '';
+    meaningEl.style.display = 'none';
+    speakBtn.style.display = 'none';
+  } else if(r.type === 'challenge' && r.level === 'medium'){
+    flagEl.style.display = 'block';
+    flagEl.textContent = r.flag;
+    langEl.textContent = r.lang;
+    phraseEl.textContent = r.phrase;
+    translitEl.textContent = '';
+    meaningEl.style.display = 'none';
+    speakBtn.style.display = 'inline-flex';
+  } else {
+    // classic, random, challenge easy
+    flagEl.style.display = 'block';
+    flagEl.textContent = r.flag;
+    langEl.textContent = r.lang;
+    phraseEl.textContent = r.phrase;
+    translitEl.textContent = r.translit ? '(' + r.translit + ')' : '';
+    if(r.meaning && r.type === 'random'){
+      meaningEl.style.display = 'block';
+      meaningEl.textContent = 'Türkçe: ' + r.meaning;
+    } else if(r.meaning && r.type === 'challenge' && r.level === 'easy'){
+      meaningEl.style.display = 'block';
+      meaningEl.textContent = 'Türkçe: ' + r.meaning;
+    } else {
+      meaningEl.style.display = 'none';
+    }
+    speakBtn.style.display = 'inline-flex';
+  }
+
+  buildProgress();
+  feedback.textContent = '';
+  feedback.className = 'feedback';
+  heardBox.classList.remove('show');
+  saidText.textContent = '';
+  statusText.innerHTML = r.type === 'emoji'
+    ? `Mikrofona <b>dokun</b> ve emojinin adını <b>${r.lang}</b> dilinde söyle.`
+    : `Mikrofona <b>dokun</b> ve söyle: <b>${r.phrase}</b>`;
+  scoreVal.textContent = score;
+  micBtn.disabled = false;
+  micBtn.style.opacity = '1';
+}
+
+// ========== SPEECH SYNTHESIS ==========
+function speakCurrent(){
+  if(!window.speechSynthesis){
+    statusText.innerHTML = 'Bu tarayıcı sesli okumayı desteklemiyor.';
+    return;
+  }
+  const r = rounds[idx];
+  if(!r || r.type === 'emoji' || (r.type === 'challenge' && r.level === 'hard')) return;
+
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(r.phrase);
+  u.lang = r.langCode || 'en-US';
+  u.rate = 0.9;
+  speakBtn.classList.add('speaking');
+  u.onend = u.onerror = () => speakBtn.classList.remove('speaking');
+  // Try to pick a matching voice
+  const voices = speechSynthesis.getVoices();
+  const match = voices.find(v => v.lang.startsWith(u.lang.split('-')[0]));
+  if(match) u.voice = match;
+  speechSynthesis.speak(u);
+}
+
+speakBtn.addEventListener('click', speakCurrent);
+
+// Load voices
+if(window.speechSynthesis){
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// ========== MATCHING ==========
+function normalize(s){
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/đ/g,'d').replace(/ł/g,'l').replace(/ß/g,'ss')
+    .replace(/[.,!?¡¿'"،。！？،]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function editDistance(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i;
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j-1],dp[i-1][j],dp[i][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function fuzzyIncludes(haystack, needle){
+  if(!haystack || !needle) return false;
+  if(haystack.includes(needle)) return true;
+  const words = haystack.split(' ');
+  const needleNoSpace = needle.replace(/\s+/g,'');
+  for(let w=1; w<=words.length; w++){
+    for(let start=0; start<=words.length-w; start++){
+      const chunk = words.slice(start,start+w).join(' ').replace(/\s+/g,'');
+      const dist = editDistance(chunk, needleNoSpace);
+      const tolerance = Math.max(2, Math.ceil(needleNoSpace.length*0.45));
+      if(dist <= tolerance) return true;
+    }
+  }
+  return false;
+}
+
+function checkMatch(said){
+  const r = rounds[idx];
+  const n = normalize(said);
+  const list = r.matchList || [r.phrase];
+  return list.some(m => fuzzyIncludes(n, normalize(m)));
+}
+
+// ========== ATTEMPT HANDLING ==========
+function handleAttempt(success){
+  if(busy) return;
+  if(success){
+    busy = true;
+    micBtn.disabled = true;
+    micBtn.style.opacity = '0.5';
+    score++;
+    scoreVal.textContent = score;
+    if(mode === 'challenge' && challengeLevel){
+      challengeScores[challengeLevel].score++;
+      challengeScores[challengeLevel].total++;
+    }
+    feedback.textContent = 'Mükemmel! Doğru ✅';
+    feedback.className = 'feedback ok';
+    signEl.classList.add('pulse');
+    // For emoji: reveal the answer
+    if(rounds[idx].type === 'emoji'){
+      phraseEl.innerHTML = `<span class="emoji-big">${rounds[idx].emoji}</span><br>${rounds[idx].phrase}`;
+      meaningEl.style.display = 'block';
+      meaningEl.textContent = 'Türkçe: ' + rounds[idx].meaning;
+    }
+    setTimeout(() => {
+      signEl.classList.remove('pulse');
+      idx++;
+      busy = false;
+      micBtn.disabled = false;
+      micBtn.style.opacity = '1';
+      if(idx >= rounds.length) showEnd();
+      else renderRound();
+    }, 1000);
+  } else {
+    feedback.textContent = 'Tam olmadı, tekrar dene 🔁';
+    feedback.className = 'feedback no';
+    signEl.classList.add('shake');
+    setTimeout(() => {
+      signEl.classList.remove('shake');
+      statusText.innerHTML = rounds[idx].type === 'emoji'
+        ? `Tekrar dokun ve emojinin adını <b>${rounds[idx].lang}</b> dilinde söyle.`
+        : `Tekrar dokun ve söyle: <b>${rounds[idx].phrase}</b>`;
+    }, 500);
+  }
+}
+
+function forceSkip(){
+  if(busy) return;
+  if(mode === 'challenge' && challengeLevel){
+    challengeScores[challengeLevel].total++;
+  }
+  feedback.textContent = 'Geçildi →';
+  feedback.className = 'feedback no';
+  idx++;
+  if(idx >= rounds.length) showEnd();
+  else renderRound();
+}
+
+function showEnd(){
+  showScreen(endScreen);
+  const total = rounds.length;
+  if(score >= total * 0.8){ medal.textContent = '🏆'; endTitle.textContent = 'İnanılmazsın!'; }
+  else if(score >= total * 0.5){ medal.textContent = '🥈'; endTitle.textContent = 'Çok iyi gitti!'; }
+  else { medal.textContent = '🥉'; endTitle.textContent = 'Fena değil!'; }
+  endSub.textContent = total + ' sorudan ' + score + ' tanesini doğru söyledin.';
+  if(mode === 'challenge'){
+    const s = challengeScores[challengeLevel];
+    endSub.textContent += ` (${challengeLevel} seviye toplam: ${s.score}/${s.total})`;
+  }
+}
+
+// ========== SPEECH RECOGNITION ==========
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let attemptRoundIdx = -1;
+
+if(SpeechRecognition){
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 3;
+
+  recognition.onstart = () => {
+    listening = true;
+    attemptRoundIdx = idx;
+    micBtn.classList.add('listening');
+    statusText.innerHTML = 'Dinliyorum... <b>şimdi söyle!</b>';
+  };
+
+  recognition.onresult = (event) => {
+    if(attemptRoundIdx !== idx || busy) return;
+    let candidates = [];
+    for(let i=0;i<event.results[0].length;i++){
+      candidates.push(event.results[0][i].transcript.trim());
+    }
+    const said = candidates[0] || '';
+    heardBox.classList.add('show');
+    saidText.textContent = said || '(anlaşılamadı)';
+    const success = candidates.some(c => checkMatch(c));
+    handleAttempt(success);
+  };
+
+  recognition.onerror = (event) => {
+    listening = false;
+    micBtn.classList.remove('listening');
+    if(event.error === 'not-allowed' || event.error === 'permission-denied'){
+      statusText.innerHTML = 'Mikrofon izni gerekiyor. Tarayıcı izin istediğinde <b>İzin Ver</b>\'e dokun.';
+    } else if(event.error === 'no-speech'){
+      statusText.innerHTML = 'Seni duyamadım, tekrar dokun ve daha net söyle.';
+    } else if(event.error === 'aborted'){
+      // silent
+    } else {
+      statusText.innerHTML = 'Bir şeyler ters gitti, tekrar dener misin?';
+    }
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    micBtn.classList.remove('listening');
+  };
+
+  micBtn.addEventListener('click', () => {
+    if(listening || busy) return;
+    const r = rounds[idx];
+    recognition.lang = (r && r.langCode) || 'tr-TR';
+
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => {
+          stream.getTracks().forEach(t => t.stop());
+          try{ recognition.start(); }
+          catch(e){ statusText.textContent = 'Mikrofon başlatılamadı, tekrar dener misin?'; }
+        })
+        .catch(() => {
+          statusText.innerHTML = 'Mikrofon izni verilmedi. Tarayıcı ayarlarından bu sayfaya mikrofon izni ver.';
+        });
+    } else {
+      try{ recognition.start(); }
+      catch(e){ statusText.textContent = 'Mikrofon başlatılamadı, tekrar dener misin?'; }
+    }
+  });
+} else {
+  hint.textContent = 'Bu tarayıcı konuşma tanımayı desteklemiyor. Chrome kullanmayı dene.';
+  micBtn.addEventListener('click', () => {
+    statusText.textContent = 'Bu tarayıcıda mikrofon desteği yok.';
+  });
+}
+
+// ========== UTILS ==========
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// ========== EVENTS ==========
+menuBtn.addEventListener('click', goToMenu);
+replayBtn.addEventListener('click', goToMenu);
+skipBtn.addEventListener('click', forceSkip);
+document.getElementById('backFromCat').addEventListener('click', goToMenu);
+document.getElementById('backFromLevel').addEventListener('click', goToMenu);
+document.getElementById('backFromLang').addEventListener('click', goToMenu);
+
+// ========== INIT ==========
+buildMainMenu();
+buildCatScreen();
+buildLangSelect();
+</script>
+
+</body>
+</html>
