@@ -1,0 +1,2490 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Can Brawl</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-dark:#150f2e; --bg-panel:#211741; --bg-panel-2:#2c1f57;
+    --accent-gold:#ffcb3d; --accent-coral:#ff5f6d; --accent-teal:#33d9b2;
+    --text-light:#f5f0ff; --text-dim:#b8aee0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
+  html,body{width:100vw;width:100dvw;height:100vh;height:100dvh;overflow:hidden;background:var(--bg-dark);font-family:'Rubik',Arial,sans-serif;touch-action:none;}
+  #gameCanvas{display:block;width:100vw;width:100dvw;height:100vh;height:100dvh;background:#1b5e20;}
+
+  #ui{position:absolute;top:14px;left:14px;display:none;flex-direction:column;gap:8px;z-index:20;pointer-events:none;}
+  #ui.active{display:flex;}
+  #score-text,#objective-text,#objective-text2{color:#fff;font-size:14px;font-weight:700;text-shadow:2px 2px 4px rgba(0,0,0,.6);font-family:'Baloo 2',sans-serif;letter-spacing:.3px;}
+  .bar-bg{width:168px;height:16px;background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.85);border-radius:9px;overflow:hidden;position:relative;}
+  .bar-fill{height:100%;width:100%;transition:width .12s linear;}
+  #hp-fill{background:linear-gradient(90deg,#33d9b2,#4caf50);}
+  #super-fill{background:linear-gradient(90deg,var(--accent-gold),#ff9800);width:0%;}
+  .bar-label{position:absolute;inset:0;text-align:center;font-size:10px;font-weight:700;color:#fff;line-height:14px;text-shadow:1px 1px 2px #000;letter-spacing:.5px;}
+  #ammo-row{display:flex;gap:5px;margin-top:2px;}
+  .ammo-pip{width:16px;height:16px;border-radius:4px;border:2px solid #fff;background:rgba(255,255,255,.15);box-shadow:0 2px 4px rgba(0,0,0,.4);}
+  .ammo-pip.filled{background:var(--accent-gold);}
+  .ammo-pip.empty{background:rgba(0,0,0,.4);}
+
+  #home-btn{position:absolute;top:14px;right:14px;z-index:20;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.8);color:#fff;font-size:18px;display:none;align-items:center;justify-content:center;pointer-events:auto;}
+  #home-btn.active{display:flex;}
+
+  /* ---------- ROTATE OVERLAY ---------- */
+  #start-overlay{position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,#2c1f57 0%,#0c0820 70%);z-index:10000;display:flex;align-items:center;justify-content:center;}
+  #start-play-btn{width:110px;height:110px;border-radius:50%;border:4px solid #fff;background:var(--accent-gold);color:#3a1f00;font-size:40px;cursor:pointer;pointer-events:auto;box-shadow:0 0 40px rgba(255,196,0,.5);}
+  #rotate-overlay{position:absolute;inset:0;background:#0c0820;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;}
+  #rotate-overlay .icon{font-size:54px;margin-bottom:16px;animation:spin 1.8s ease-in-out infinite;}
+  #rotate-overlay p{color:#fff;font-family:'Baloo 2',sans-serif;font-size:18px;font-weight:700;}
+  @keyframes spin{0%{transform:rotate(0deg);}50%{transform:rotate(-90deg);}100%{transform:rotate(-90deg);}}
+
+  /* ---------- LOBBY (mockup layout) ---------- */
+  #lobby-screen{position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,#2c1f57 0%,#150f2e 65%);z-index:50;overflow:hidden;}
+
+  #player-name-input{position:absolute;top:16px;left:16px;max-width:44vw;padding:10px 14px;border-radius:10px;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:15px;font-family:'Baloo 2',sans-serif;font-weight:700;pointer-events:auto;}
+  #playercount-toggle{position:absolute;top:16px;right:16px;padding:10px 14px;border-radius:10px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);color:#fff;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:13px;cursor:pointer;pointer-events:auto;}
+
+  #avatar-wrap{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;pointer-events:auto;}
+  .main-avatar{width:180px;height:180px;border-radius:50%;border:6px solid #fff;box-shadow:0 0 0 6px rgba(255,203,61,.25),0 10px 30px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-weight:800;color:#fff;font-size:72px;text-shadow:2px 2px 6px rgba(0,0,0,.5);cursor:pointer;background-size:cover;background-position:center;}
+  #avatar-name{margin-top:14px;font-family:'Baloo 2',sans-serif;font-weight:800;color:#fff;font-size:20px;text-shadow:2px 2px 4px rgba(0,0,0,.6);}
+  #avatar-hint{margin-top:4px;color:var(--text-dim);font-size:11.5px;}
+
+  #bottom-controls{position:absolute;bottom:20px;right:16px;display:flex;gap:10px;align-items:flex-end;}
+  .ctrl-box{width:88px;border-radius:14px;border:3px solid #fff;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;box-shadow:0 6px 14px rgba(0,0,0,.4);padding:8px 4px;text-align:center;}
+  .mode-box{background:linear-gradient(160deg,#ef5350,#c62828);height:100px;}
+  .map-box{background:linear-gradient(160deg,#ffa726,#e65100);height:100px;}
+  .start-box{background:linear-gradient(160deg,#ffee58,#f9a825);height:100px;justify-content:center;font-family:'Baloo 2',sans-serif;font-weight:800;color:#3a1f00;font-size:19px;letter-spacing:1px;}
+  .ctrl-icon{font-size:30px;line-height:1;margin-bottom:6px;}
+  .map-swatch-icon{width:34px;height:34px;border-radius:8px;border:2px solid rgba(255,255,255,.8);}
+  .ctrl-label{font-family:'Baloo 2',sans-serif;font-weight:700;color:#fff;font-size:10.5px;text-shadow:1px 1px 2px rgba(0,0,0,.5);line-height:1.2;}
+
+  #online-link{position:absolute;bottom:20px;left:16px;padding:10px 16px;border-radius:12px;border:2px solid rgba(255,95,109,.5);background:rgba(0,0,0,.4);color:var(--accent-coral);font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;pointer-events:auto;}
+
+  #character-picker{position:absolute;inset:0;background:rgba(10,6,26,.96);z-index:70;display:none;flex-direction:column;align-items:center;padding:24px 16px;overflow-y:auto;}
+  #character-picker.active{display:flex;}
+  #picker-title{font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--accent-gold);font-size:20px;letter-spacing:2px;margin-bottom:16px;}
+  #character-picker-grid{width:100%;max-width:540px;display:flex;flex-direction:column;gap:9px;margin-bottom:16px;}
+  .char-card{background:var(--bg-panel);border:2px solid rgba(255,255,255,.08);border-radius:14px;padding:9px;display:flex;align-items:center;gap:9px;cursor:pointer;pointer-events:auto;}
+  .char-card.selected{border-color:var(--accent-gold);box-shadow:0 0 0 2px rgba(255,203,61,.35),0 4px 14px rgba(255,203,61,.25);background:var(--bg-panel-2);}
+  .char-avatar{width:42px;height:42px;border-radius:50%;flex-shrink:0;border:3px solid rgba(255,255,255,.85);box-shadow:0 3px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-weight:800;color:#fff;font-size:16px;text-shadow:1px 1px 2px rgba(0,0,0,.5);background-size:cover;background-position:center;}
+  .char-info{flex:1;min-width:0;}
+  .char-name{font-family:'Baloo 2',sans-serif;font-weight:700;color:#fff;font-size:13.5px;}
+  .char-role{color:var(--text-dim);font-size:10.5px;margin-bottom:3px;}
+  .char-stats{display:flex;gap:5px;flex-wrap:wrap;}
+  .stat-pill{font-size:8.5px;font-weight:700;color:#150f2e;background:var(--accent-teal);border-radius:6px;padding:2px 5px;}
+  .ult-line{font-size:10.5px;color:var(--accent-gold);margin-top:5px;line-height:1.3;}
+  #picker-close-btn{padding:13px 40px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;background:var(--accent-gold);color:#3a1f00;border:3px solid #fff;border-radius:14px;cursor:pointer;pointer-events:auto;}
+
+  #online-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:60;width:90%;max-width:480px;background:var(--bg-panel);border:2px solid rgba(255,95,109,.4);border-radius:14px;padding:16px;}
+  #online-box p{color:var(--text-dim);font-size:12px;line-height:1.5;margin-bottom:10px;}
+  .online-row{display:flex;gap:8px;margin-bottom:10px;}
+  .online-row input{flex:1;padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#fff;font-size:16px;font-family:'Baloo 2',sans-serif;text-align:center;letter-spacing:3px;}
+  .online-btn{padding:12px 16px;border-radius:10px;border:2px solid #fff;background:var(--accent-teal);color:#04231b;font-weight:800;font-family:'Baloo 2',sans-serif;cursor:pointer;pointer-events:auto;font-size:13px;}
+  .online-btn.secondary{background:var(--accent-coral);color:#2a0006;}
+  .online-btn.full{width:100%;margin-bottom:8px;}
+  #online-box textarea{width:100%;min-height:56px;padding:10px;border-radius:10px;border:2px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#fff;font-size:11px;font-family:monospace;resize:vertical;margin-bottom:8px;pointer-events:auto;}
+  #online-status{color:var(--text-light);font-size:13px;text-align:center;min-height:18px;}
+  #room-code-display{font-family:'Baloo 2',sans-serif;font-size:30px;color:var(--accent-gold);text-align:center;letter-spacing:6px;margin:8px 0;}
+
+  /* ---------- END / RESULT MODAL ---------- */
+  #game-modal{position:absolute;inset:0;background:rgba(10,6,26,.9);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:60;text-align:center;padding:20px;}
+  #game-modal.active{display:flex;}
+  #modal-title{font-family:'Baloo 2',sans-serif;color:#fff;font-size:36px;font-weight:800;margin-bottom:8px;}
+  #modal-desc{color:var(--text-dim);font-size:14px;margin-bottom:24px;}
+  .modal-btn-row{display:flex;gap:12px;}
+  .modal-btn{padding:13px 22px;font-family:'Baloo 2',sans-serif;font-size:14px;font-weight:700;border:2px solid #fff;border-radius:12px;cursor:pointer;pointer-events:auto;}
+  .modal-btn.primary{background:var(--accent-gold);color:#3a1f00;}
+  .modal-btn.secondary{background:transparent;color:#fff;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="start-overlay">
+  <button id="start-play-btn" aria-label="Başlat">▶</button>
+</div>
+
+<div id="ui">
+  <div id="score-text">SKOR: <span id="score">0</span></div>
+  <div id="objective-text"><span id="objective-label">KALAN DÜŞMAN</span>: <span id="objective-value">0</span></div>
+  <div id="objective-text2" style="display:none;"></div>
+  <div class="bar-bg"><div id="hp-fill" class="bar-fill"></div><div class="bar-label">CAN</div></div>
+  <div id="ammo-row"></div>
+  <div class="bar-bg"><div id="super-fill" class="bar-fill"></div><div class="bar-label">SÜPER</div></div>
+</div>
+<button id="home-btn" onclick="returnToLobby()">⌂</button>
+
+<div id="rotate-overlay"><div class="icon">📱</div><p>Lütfen telefonu yatay çevir</p></div>
+
+<div id="lobby-screen">
+  <input type="text" id="player-name-input" maxlength="14" placeholder="İSİM123">
+  <button id="playercount-toggle">👤 Tekli</button>
+
+  <div id="avatar-wrap">
+    <div id="main-avatar" class="main-avatar"></div>
+    <div id="avatar-name"></div>
+    <div id="avatar-hint">Karakter değiştirmek için dokun</div>
+  </div>
+
+  <div id="bottom-controls">
+    <div class="ctrl-box mode-box" id="mode-box">
+      <div class="ctrl-icon" id="mode-icon">💎</div>
+      <div class="ctrl-label" id="mode-label">Elmas Avı</div>
+    </div>
+    <div class="ctrl-box map-box" id="map-box">
+      <div class="ctrl-icon map-swatch-icon" id="map-icon"></div>
+      <div class="ctrl-label" id="map-label">Çalılık Vadi</div>
+    </div>
+    <div class="ctrl-box start-box" id="start-box-btn">SAVAŞ</div>
+  </div>
+
+  <button id="online-link">🌐 Çevrimiçi 1v1 (Beta)</button>
+</div>
+
+<div id="character-picker">
+  <div id="picker-title">KARAKTER SEÇ</div>
+  <div id="character-picker-grid"></div>
+  <button id="picker-close-btn">Tamam</button>
+</div>
+
+<div id="online-box" style="display:none;">
+  <p>Çevrimiçi 1v1: oda kur, kodu arkadaşına gönder, o da aynı kodla katılsın. Eşleştirme, bağımsız açık kaynaklı PeerJS ağı üzerinden kurulur (Claude'a/Anthropic'e bağlı değildir); kurulduktan sonra oyun verisi doğrudan cihazdan cihaza gider.</p>
+  <div class="online-row">
+    <button class="online-btn" id="create-room-btn">ODA KUR</button>
+    <input type="text" id="join-code-input" placeholder="KOD GİR" maxlength="4">
+    <button class="online-btn secondary" id="join-room-btn">KATIL</button>
+  </div>
+  <div id="room-code-display"></div>
+  <div id="online-status"></div>
+  <button class="online-btn secondary" id="online-back-btn" style="margin-top:10px;width:100%;">GERİ</button>
+</div>
+
+
+<div id="game-modal">
+  <div id="modal-title">CAN BRAWL</div>
+  <div id="modal-desc">Savaşa katılmak için başla!</div>
+  <div class="modal-btn-row">
+    <button class="modal-btn primary" id="replay-btn">TEKRAR OYNA</button>
+    <button class="modal-btn secondary" onclick="returnToLobby()">LOBİYE DÖN</button>
+  </div>
+</div>
+
+<script>
+/* ================= ORIENTATION LOCK ================= */
+function isPortrait(){ return window.innerHeight > window.innerWidth; }
+function updateOrientationOverlay(){ document.getElementById('rotate-overlay').style.display = isPortrait() ? 'flex' : 'none'; }
+window.addEventListener('resize', updateOrientationOverlay);
+window.addEventListener('orientationchange', updateOrientationOverlay);
+updateOrientationOverlay();
+
+/* ================= DATA ================= */
+// Embedded fallback copy of karakter.js — used if fetch('karakter.js') isn't
+// reachable (e.g. this HTML is opened on its own, not alongside karakter.js).
+// If you host can-brawl.html and karakter.js together, the game will load
+// your edited karakter.js automatically instead of this copy.
+const EMBEDDED_KARAKTER_SOURCE = `
+[F=ates.png isim=Ateş hasar=15 can=100 mermi=3 ateş tarzı=normal ulti="Alev Patlaması" hiz=4.0]
+[F=ruzgar.png isim=Rüzgar hasar=32 can=75 mermi=2 ateş tarzı=keskin ulti="Dev Mermi" hiz=3.4]
+[F=golge.png isim=Gölge hasar=24 can=95 mermi=1 ateş tarzı=dash ulti="Gölge Sıçraması" hiz=5.0]
+[F=kaya.png isim=Kaya hasar=26 can=135 mermi=2 ateş tarzı=bomba ulti="Büyük Bombardıman" hiz=2.8]
+[F=yildirim.png isim=Yıldırım hasar=9 can=100 mermi=3 ateş tarzı=sacma ulti="Çifte Namlu" hiz=3.9]
+[F=buz.png isim=Buz hasar=13 can=100 mermi=3 ateş tarzı=don ulti="Donma Dalgası" hiz=3.6]
+[F=firtina.png isim=Fırtına hasar=18 can=80 mermi=1 ateş tarzı=dash ulti="Kasırga Koşusu" hiz=5.6]
+[F=toprak.png isim=Toprak hasar=20 can=150 mermi=2 ateş tarzı=bomba ulti="Deprem" hiz=2.5]
+[F=zehir.png isim=Zehir hasar=10 can=95 mermi=3 ateş tarzı=zehir ulti="Zehir Bulutu" hiz=3.7]
+[F=demir.png isim=Demir hasar=16 can=190 mermi=3 ateş tarzı=bumerang ulti="Zırh Kırma" hiz=2.8 renk=#607d8b]
+[F=kartal.png isim=Kartal hasar=18 can=90 mermi=2 ateş tarzı=zincir ulti="Ölümcül Nişan" hiz=3.5 renk=#8d6e63 yenilenme=1600]
+[F=kobra.png isim=Kobra hasar=24 can=95 mermi=2 ateş tarzı=mayin ulti="Ölümcül Isırık" hiz=3.6 renk=#7cb342 yenilenme=2200]
+[F=volkan.png isim=Volkan hasar=15 can=140 mermi=3 ateş tarzı=guduml ulti="Lav Yağmuru" hiz=2.6 renk=#e64a19]
+[F=sahin.png isim=Şahin hasar=22 can=85 mermi=2 ateş tarzı=lazer ulti="Şahin Saldırısı" hiz=4.1 renk=#ffca28 yenilenme=1400]
+[F=buzcu.png isim=Buzcu hasar=17 can=125 mermi=3 ateş tarzı=titresim ulti="Buzul Çağı" hiz=3.0 renk=#4dd0e1 yenilenme=1800]
+[F=panter.png isim=Panter hasar=12 can=90 mermi=3 ateş tarzı=sekme ulti="Kükreyiş Salvosu" hiz=4.1 renk=#ff7043]
+[F=gulbahar.png isim=Gülbahar hasar=14 can=100 mermi=3 ateş tarzı=kanca ulti="Diken Fırtınası" hiz=4.2 renk=#ec407a]
+[F=zumrut.png isim=Zümrüt hasar=20 can=160 mermi=2 ateş tarzı=itis ulti="Zümrüt Çöküşü" hiz=2.7 renk=#00897b]
+[F=akrep.png isim=Akrep hasar=13 can=105 mermi=3 ateş tarzı=vampir ulti="Kum Fırtınası" hiz=3.8 renk=#bdb76b]
+[F=tetik.png isim=Tetik hasar=7 can=90 mermi=3 ateş tarzı=seri ulti="Kurşun Fırtınası" hiz=3.9 renk=#455a64 yenilenme=1600]
+[F=arna.png isim=Arna hasar=38 can=70 mermi=1 ateş tarzı=keskin delme=4 ulti="Arna Nişanı" hiz=3.3 renk=#37474f yenilenme=2200]
+[F=vesda.png isim=Vesda hasar=14 can=130 mermi=2 ateş tarzı=don yavaslatma=0.7 donsuresi=2600 ulti="Vesda Dondurması" hiz=2.9 renk=#4fc3f7]
+[F=inkes.png isim=Inkes hasar=10 can=95 mermi=4 ateş tarzı=sekme ulti="İnkes Sekmesi" hiz=4.0 renk=#ff5722 yenilenme=650]
+[F=vada.png isim=Vada hasar=16 can=175 mermi=2 ateş tarzı=itis ulti="Vada Şoku" hiz=2.6 renk=#26a69a]
+[F=ozmir.png isim=Ozmir hasar=13 can=100 mermi=2 ateş tarzı=zincir ulti="Ozmir Zinciri" hiz=3.6 renk=#fdd835]
+[F=tulva.png isim=Tulva hasar=11 can=150 mermi=3 ateş tarzı=vampir ulti="Tulva Emişi" hiz=3.1 renk=#8e24aa]
+[F=renka.png isim=Renka hasar=9 can=90 mermi=4 ateş tarzı=guduml ulti="Renka Sürüsü" hiz=3.8 renk=#d81b60]
+[F=kesmi.png isim=Kesmi hasar=15 can=105 mermi=2 ateş tarzı=kanca ulti="Kesmi Kancası" hiz=4.3 renk=#f06292]
+[F=solun.png isim=Solun hasar=19 can=140 mermi=2 ateş tarzı=titresim ulti="Solun Dalgası" hiz=2.8 renk=#00acc1]
+[F=drenak.png isim=Drenak hasar=24 can=155 mermi=2 ateş tarzı=bomba ulti="Drenak Bombardımanı" hiz=2.5 renk=#6d4c41 yenilenme=2300]
+`;
+
+const STYLE_MAP = { normal:'normal', keskin:'sniper', sniper:'sniper', dash:'dash', hucum:'dash',
+  bomba:'bomb', sacma:'shotgun', don:'frost', buz:'frost', zehir:'poison', poison:'poison',
+  bumerang:'bumerang', zincir:'zincir', mayin:'mayin', guduml:'guduml', lazer:'lazer',
+  titresim:'titresim', sekme:'sekme', kanca:'kanca', itis:'itis', vampir:'vampir', seri:'seri',
+  tuzak:'tuzak', kalkan:'kalkan', yanki:'yanki', ag:'ag', isirik:'isirik', ikiz:'ikiz', yercekimi:'yercekimi', isinlan:'isinlan', parcala:'parcala', alev:'alev' };
+const STYLE_ROLE = { normal:'Normal Atış', sniper:'Keskin Nişancı', dash:'Hücumcu (Dash)', bomb:'Bombacı', shotgun:'Av Tüfeği', frost:'Dondurucu', poison:'Zehirleyici',
+  bumerang:'Bumerangcı', zincir:'Yıldırımcı', mayin:'Mayınlı', guduml:'Güdümlü Roket', lazer:'Lazerci', titresim:'Şok Dalgası', sekme:'Sekmeli', kanca:'Kancacı', itis:'İtici', vampir:'Kan Emici', seri:'Seri Ateş',
+  tuzak:'Tuzakçı', kalkan:'Kalkancı', yanki:'Yankıcı', ag:'Ağcı', isirik:'Asalak', ikiz:'İkiz Atıcı', yercekimi:'Çekimci', isinlan:'Işınlayıcı', parcala:'Parçalayıcı', alev:'Alevci' };
+const STYLE_ULT_DESC = { normal:'8 yönde patlayan yıldız mermileri', sniper:'Her şeyi delen kocaman tek bir mermi', dash:'Çok daha uzun ve güçlü, dokunulmaz dash',
+  bomb:'Aynı anda 3 bomba fırlatır', shotgun:'Çok daha geniş ve güçlü saçma', frost:'Çevredeki herkese anlık hasar + donma', poison:'Çevredeki herkesi zehirler',
+  bumerang:'3 bumerang aynı anda, geniş açıyla fırlar', zincir:'Çok daha güçlü ve daha fazla seken dev bir yıldırım', mayin:'Aynı anda 3 mayın döşer',
+  guduml:'Çok daha güçlü, çoklu güdümlü roketler', lazer:'Çok daha geniş ve güçlü, uzun süreli lazer', titresim:'Çok daha geniş ve güçlü şok dalgası',
+  sekme:'Duvarlarda çok daha fazla sekebilen güçlü mermi', kanca:'Düşmanı doğrudan yanına çeken güçlü kanca', itis:'Çevredeki herkesi güçlüce geri iten patlama', vampir:'Vuruşta çok daha fazla can çalan güçlü mermi',
+  seri:'Tek seferde 10 mermilik dev bir seri açar',
+  tuzak:'Aynı anda 3 kalıcı tuzak döşer', kalkan:'Çok daha güçlü ve uzun süreli dev bir kalkan verir', yanki:'3 kat daha fazla yankı mermisi gönderir',
+  ag:'Çevredeki herkesi uzun süre köklendiren dev bir ağ', isirik:'Aynı anda birden fazla düşmana yapışan güçlü asalaklar', ikiz:'4 mermi birden, çok daha geniş yakınsamayla',
+  yercekimi:'Çok daha güçlü ve geniş, uzun süreli bir çekim alanı', isinlan:'Çok daha uzağa ışınlanıp çok daha güçlü vurur', parcala:'Çok daha fazla ve güçlü parçaya bölünen dev mermi', alev:'Çok daha uzun ve geniş, yanan bir iz bırakır' };
+const STYLE_DEFAULTS = {
+  normal:{ bulletSpeed:9, range:480, bulletRadius:9 },
+  sniper:{ bulletSpeed:15, range:1000, bulletRadius:6, pierce:2 },
+  dash:{ dashDistance:230, dashSpeed:17 },
+  bomb:{ bulletSpeed:0, range:420, bulletRadius:12, splashRadius:80 },
+  shotgun:{ bulletSpeed:10, range:260, bulletRadius:7, pellets:5, spread:0.55 },
+  frost:{ bulletSpeed:8, range:480, bulletRadius:9, slowFactor:0.4, slowDuration:1500 },
+  poison:{ bulletSpeed:8.5, range:460, bulletRadius:9, poisonDmg:4, poisonDuration:3000 },
+  bumerang:{ bulletSpeed:11, range:340, bulletRadius:11 },
+  zincir:{ bulletSpeed:12, range:520, bulletRadius:7, chainCount:2, chainRadius:220 },
+  mayin:{ bulletSpeed:0, range:260, bulletRadius:13, mineRadius:105, mineArmTime:400 },
+  guduml:{ bulletSpeed:7, range:600, bulletRadius:9, homingStrength:0.09 },
+  lazer:{ range:520, beamWidth:16 },
+  titresim:{ range:170 },
+  sekme:{ bulletSpeed:10, range:520, bulletRadius:8, bounces:2 },
+  kanca:{ bulletSpeed:13, range:340, bulletRadius:8, pullStrength:0.55 },
+  itis:{ bulletSpeed:6, range:380, bulletRadius:14, knockback:70 },
+  vampir:{ bulletSpeed:9.5, range:420, bulletRadius:8, vampRatio:0.35 },
+  seri:{ bulletSpeed:12, range:440, bulletRadius:6, burstCount:5, burstDelay:65 },
+  tuzak:{ bulletSpeed:0, range:260, bulletRadius:12, trapRadius:70, trapHits:3, trapDuration:9000, trapArmTime:400 },
+  kalkan:{ bulletSpeed:10, range:440, bulletRadius:8, shieldAmount:35, shieldDuration:4000 },
+  yanki:{ bulletSpeed:9, range:460, bulletRadius:8, echoDelay:450 },
+  ag:{ bulletSpeed:8, range:380, bulletRadius:10, rootDuration:1600 },
+  isirik:{ bulletSpeed:9, range:360, bulletRadius:8, leechDuration:3500, leechTick:3 },
+  ikiz:{ bulletSpeed:10, range:480, bulletRadius:7, converge:0.22 },
+  yercekimi:{ range:160, wellStrength:2.2, wellDuration:1800 },
+  isinlan:{ teleportDist:260, dmg_mult:1 },
+  parcala:{ bulletSpeed:8, range:420, bulletRadius:10, fragments:4 },
+  alev:{ bulletSpeed:9, range:420, bulletRadius:8, patchDuration:2200, patchTick:3, patchInterval:60 }
+};
+const AVATAR_PALETTE = ['#e53935','#00acc1','#8e24aa','#6d4c41','#fdd835','#4fc3f7','#26a69a','#8d6e63','#7cb342','#ff7043','#5c6bc0','#ec407a'];
+
+function numOr(v,d){ const n=parseFloat(v); return isNaN(n)?d:n; }
+function parseKarakterFile(text){
+  const noComments = text.split('\n').map(l=>l.replace(/\/\/.*/,'')).join(' ');
+  const blocks = noComments.match(/\[[^\]]+\]/g) || [];
+  return blocks.map((block, idx)=>{
+    let inner = block.slice(1,-1).replace(/ateş\s+tarzı\s*=/i, 'atestarzi=');
+    const tokens = inner.match(/[^\s"']+="[^"]*"|[^\s"']+='[^']*'|\S+/g) || [];
+    const f = {};
+    tokens.forEach(tok=>{
+      const eq = tok.indexOf('=');
+      if(eq===-1) return;
+      const key = tok.slice(0,eq).toLowerCase();
+      const val = tok.slice(eq+1).replace(/^["']|["']$/g,'');
+      f[key] = val;
+    });
+    const style = STYLE_MAP[(f.atestarzi||'normal').toLowerCase()] || 'normal';
+    const defaults = STYLE_DEFAULTS[style];
+    let name = f.isim;
+    if(!name && f.f){ name = f.f.replace(/\.[a-z0-9]+$/i,'').replace(/[_-]/g,' '); name = name.charAt(0).toUpperCase()+name.slice(1); }
+    if(!name) name = 'Karakter'+(idx+1);
+    const color = f.renk || AVATAR_PALETTE[idx % AVATAR_PALETTE.length];
+    const ch = Object.assign({
+      id: name.toLowerCase().replace(/\s+/g,'_')+'_'+idx,
+      name, role: STYLE_ROLE[style],
+      color, dark: color,
+      hp: numOr(f.can, 100), speed: numOr(f.hiz, 3.8), dmg: numOr(f.hasar, 15),
+      maxAmmo: Math.max(1,Math.round(numOr(f.mermi, 3))), reloadTime: numOr(f.yenilenme, 1500),
+      attackType: style, avatarImg: f.f || null,
+      ultName: f.ulti || 'Özel Yetenek', ultDesc: STYLE_ULT_DESC[style]
+    }, defaults);
+    if(f.menzil) ch.range = numOr(f.menzil, ch.range);
+    if(f.mermihizi) ch.bulletSpeed = numOr(f.mermihizi, ch.bulletSpeed);
+    if(f.mermiboyu) ch.bulletRadius = numOr(f.mermiboyu, ch.bulletRadius);
+    if(f.delme) ch.pierce = Math.round(numOr(f.delme, ch.pierce||0));
+    if(f.sacmasayisi) ch.pellets = Math.round(numOr(f.sacmasayisi, ch.pellets||5));
+    if(f.yayilma) ch.spread = numOr(f.yayilma, ch.spread||0.5);
+    if(f.patlamayaricapi) ch.splashRadius = numOr(f.patlamayaricapi, ch.splashRadius||75);
+    if(f.yavaslatma) ch.slowFactor = numOr(f.yavaslatma, ch.slowFactor||0.4);
+    if(f.donsuresi) ch.slowDuration = numOr(f.donsuresi, ch.slowDuration||1500);
+    if(f.zehirhasari) ch.poisonDmg = numOr(f.zehirhasari, ch.poisonDmg||4);
+    if(f.zehirsuresi) ch.poisonDuration = numOr(f.zehirsuresi, ch.poisonDuration||3000);
+    if(f.dashmesafe) ch.dashDistance = numOr(f.dashmesafe, ch.dashDistance||230);
+    if(f.dashhizi) ch.dashSpeed = numOr(f.dashhizi, ch.dashSpeed||17);
+    return ch;
+  });
+}
+
+const avatarImageCache = {};
+function getAvatarImage(filename){
+  if(!filename) return null;
+  let entry = avatarImageCache[filename];
+  if(!entry){
+    entry = { img:new Image(), loaded:false };
+    entry.img.onload = ()=>{ entry.loaded=true; };
+    entry.img.onerror = ()=>{ entry.loaded=false; };
+    entry.img.src = filename;
+    avatarImageCache[filename] = entry;
+  }
+  return entry.loaded ? entry.img : null;
+}
+
+let CHARACTERS = [];
+let charactersReady = false;
+async function loadCharacters(){
+  let text = EMBEDDED_KARAKTER_SOURCE;
+  try{
+    const res = await fetch('karakter.js');
+    if(res.ok){ const fetched = await res.text(); if(fetched && fetched.includes('[')) text = fetched; }
+  }catch(e){ /* not servable alongside this file — use embedded copy */ }
+  CHARACTERS = parseKarakterFile(text);
+  if(CHARACTERS.length===0) CHARACTERS = parseKarakterFile(EMBEDDED_KARAKTER_SOURCE);
+  charactersReady = true;
+}
+
+const DEFAULT_SPAWNS = [ {x:.08,y:.1}, {x:.92,y:.1}, {x:.08,y:.9}, {x:.92,y:.9}, {x:.5,y:.05}, {x:.5,y:.95}, {x:.06,y:.5}, {x:.94,y:.5} ];
+
+const MAPS = [
+  { id:'jungle', name:'Çalılık Vadi', desc:'Bol çalılık, gizlenmeye uygun.', bg:'#1b5e20', grid:'rgba(255,255,255,.06)', wallColor:'#6d4c41', wallEdge:'#4e342e', bushColor:'rgba(46,125,50,.65)', bushEdge:'rgba(27,94,32,.9)', swatch:'linear-gradient(135deg,#1b5e20,#43a047)',
+    walls:[ {x:.30,y:.28,w:.05,h:.09}, {x:.63,y:.58,w:.06,h:.09}, {x:.15,y:.55,w:.04,h:.08}, {x:.80,y:.30,w:.04,h:.08} ],
+    bushes:[ {x:.06,y:.12,w:.20,h:.15}, {x:.72,y:.10,w:.22,h:.16}, {x:.05,y:.68,w:.22,h:.20}, {x:.72,y:.66,w:.22,h:.20}, {x:.42,y:.06,w:.16,h:.10}, {x:.42,y:.84,w:.16,h:.10} ],
+    spawnPoints: DEFAULT_SPAWNS, playerSpawn:{x:.5,y:.72} },
+  { id:'fort', name:'Taş Kale', desc:'Dar koridorlar, bol duvar.', bg:'#37474f', grid:'rgba(255,255,255,.05)', wallColor:'#78909c', wallEdge:'#37474f', bushColor:'rgba(85,139,47,.4)', bushEdge:'rgba(51,84,28,.8)', swatch:'linear-gradient(135deg,#37474f,#90a4ae)',
+    walls:[ {x:.25,y:.08,w:.035,h:.28}, {x:.715,y:.08,w:.035,h:.28}, {x:.25,y:.64,w:.035,h:.28}, {x:.715,y:.64,w:.035,h:.28}, {x:.08,y:.46,w:.16,h:.045}, {x:.76,y:.46,w:.16,h:.045} ],
+    bushes:[ {x:.02,y:.02,w:.15,h:.12}, {x:.83,y:.86,w:.15,h:.12} ],
+    spawnPoints: [ {x:.06,y:.06}, {x:.94,y:.06}, {x:.06,y:.94}, {x:.94,y:.94}, {x:.5,y:.06}, {x:.5,y:.94} ], playerSpawn:{x:.5,y:.5} },
+  { id:'desert', name:'Çöl Harabeleri', desc:'Dağınık kalıntılar, açık alan.', bg:'#c9a66b', grid:'rgba(0,0,0,.06)', wallColor:'#a1887f', wallEdge:'#6d4c41', bushColor:'rgba(120,124,30,.45)', bushEdge:'rgba(74,77,16,.85)', swatch:'linear-gradient(135deg,#c9a66b,#8d6e63)',
+    walls:[ {x:.15,y:.18,w:.10,h:.10}, {x:.75,y:.18,w:.10,h:.10}, {x:.15,y:.72,w:.10,h:.10}, {x:.75,y:.72,w:.10,h:.10}, {x:.45,y:.12,w:.10,h:.05}, {x:.45,y:.83,w:.10,h:.05} ],
+    bushes:[ {x:.01,y:.40,w:.11,h:.20}, {x:.88,y:.40,w:.11,h:.20} ],
+    spawnPoints: DEFAULT_SPAWNS, playerSpawn:{x:.28,y:.5} },
+  { id:'ice', name:'Buzul Geçidi', desc:'Açık ve kaygan buz arazisi.', bg:'#78909c', grid:'rgba(255,255,255,.15)', wallColor:'#cfd8dc', wallEdge:'#90a4ae', bushColor:'rgba(178,235,242,.35)', bushEdge:'rgba(77,182,172,.7)', swatch:'linear-gradient(135deg,#78909c,#e0f7fa)',
+    walls:[ {x:.46,y:.05,w:.08,h:.06}, {x:.46,y:.89,w:.08,h:.06}, {x:.1,y:.42,w:.06,h:.16}, {x:.84,y:.42,w:.06,h:.16} ],
+    bushes:[ {x:.2,y:.15,w:.14,h:.12}, {x:.66,y:.15,w:.14,h:.12}, {x:.2,y:.73,w:.14,h:.12}, {x:.66,y:.73,w:.14,h:.12} ],
+    spawnPoints: DEFAULT_SPAWNS, playerSpawn:{x:.5,y:.5} },
+  { id:'stadium', name:'Stadyum', desc:'Açık alan — Savaş Topu için ideal.', bg:'#2e7d32', grid:'rgba(255,255,255,.1)', wallColor:'#8d6e63', wallEdge:'#5d4037', bushColor:'rgba(46,125,50,.5)', bushEdge:'rgba(27,94,32,.85)', swatch:'linear-gradient(135deg,#2e7d32,#66bb6a)',
+    walls:[ {x:.05,y:.35,w:.03,h:.3}, {x:.92,y:.35,w:.03,h:.3} ],
+    bushes:[ {x:.06,y:.05,w:.14,h:.1}, {x:.8,y:.05,w:.14,h:.1}, {x:.06,y:.85,w:.14,h:.1}, {x:.8,y:.85,w:.14,h:.1} ],
+    spawnPoints: [ {x:.15,y:.15}, {x:.85,y:.15}, {x:.5,y:.1} ], playerSpawn:{x:.5,y:.75} }
+];
+
+const MODES = [
+  { id:'ELIMINATION', name:'Yok Etme', desc:'Belirli doğma noktalarından gelen tüm düşmanları temizle.' },
+  { id:'GEMGRAB', name:'Elmas Avı', desc:'Süre bitene kadar elmas topla (max 10). En çok elması toplayan kazanır.' },
+  { id:'BRAWLBALL', name:'Savaş Topu', desc:'Topu rakip kaleye sok! Önce 3 gol atan kazanır.' },
+  { id:'ONLINE', name:'Çevrimiçi 1v1', desc:'Oda kurup arkadaşınla peer-to-peer düello yap.', beta:true }
+];
+
+const PLAYER_COUNTS = [ {id:'SOLO', name:'Tekli', icon:'👤', size:1}, {id:'DUO', name:'İkili', icon:'👥', size:2}, {id:'TRIO', name:'Üçlü', icon:'👪', size:3} ];
+const MODE_ICONS = { ELIMINATION:'⚔️', GEMGRAB:'💎', BRAWLBALL:'⚽', ONLINE:'🌐' };
+const CYCLABLE_MODE_INDICES = MODES.map((m,i)=>i).filter(i=>MODES[i].id!=='ONLINE');
+
+let selChar = 0, selMap = 0, selMode = 0, selPlayerCount = 0;
+let playerName = '';
+
+/* ================= LOBBY RENDER ================= */
+function renderLobby(){
+  const nameInput = document.getElementById('player-name-input');
+  if(nameInput.value !== playerName) nameInput.value = playerName;
+  nameInput.oninput = ()=>{ playerName = nameInput.value.slice(0,14); };
+
+  document.getElementById('playercount-toggle').innerText = PLAYER_COUNTS[selPlayerCount].icon+' '+PLAYER_COUNTS[selPlayerCount].name;
+
+  if(!CHARACTERS.length) return; // still loading karakter.js
+  const c = CHARACTERS[selChar];
+  const avatarEl = document.getElementById('main-avatar');
+  avatarEl.style.background = c.color;
+  const img = getAvatarImage(c.avatarImg);
+  avatarEl.style.backgroundImage = img ? `url(${c.avatarImg})` : 'none';
+  avatarEl.innerText = img ? '' : c.name[0];
+  document.getElementById('avatar-name').innerText = c.name;
+
+  const m = MODES[selMode];
+  document.getElementById('mode-icon').innerText = MODE_ICONS[m.id]||'❓';
+  document.getElementById('mode-label').innerText = m.name;
+
+  const mp = MAPS[selMap];
+  document.getElementById('map-icon').style.background = mp.swatch;
+  document.getElementById('map-label').innerText = mp.name;
+
+  renderCharacterPicker();
+}
+function renderCharacterPicker(){
+  const cg = document.getElementById('character-picker-grid');
+  cg.innerHTML = CHARACTERS.map((c,i)=>{
+    const img = getAvatarImage(c.avatarImg);
+    return `
+    <div class="char-card ${i===selChar?'selected':''}" data-i="${i}">
+      <div class="char-avatar" style="background:${c.color};${img?`background-image:url(${c.avatarImg});`:''}">${img?'':c.name[0]}</div>
+      <div class="char-info">
+        <div class="char-name">${c.name}</div>
+        <div class="char-role">${c.role}</div>
+        <div class="char-stats">
+          <span class="stat-pill">❤ ${c.hp}</span>
+          <span class="stat-pill">⚔ ${c.dmg}</span>
+        </div>
+        <div class="ult-line">✨ <b>${c.ultName}</b> — ${c.ultDesc}</div>
+      </div>
+    </div>`;
+  }).join('');
+  cg.querySelectorAll('.char-card').forEach(el=>el.addEventListener('click',()=>{
+    selChar=+el.dataset.i; renderLobby();
+    document.getElementById('character-picker').classList.remove('active');
+  }));
+}
+
+document.getElementById('main-avatar').addEventListener('click', ()=>{
+  renderCharacterPicker();
+  document.getElementById('character-picker').classList.add('active');
+});
+document.getElementById('picker-close-btn').addEventListener('click', ()=>{
+  document.getElementById('character-picker').classList.remove('active');
+});
+document.getElementById('playercount-toggle').addEventListener('click', ()=>{
+  selPlayerCount = (selPlayerCount+1)%PLAYER_COUNTS.length; renderLobby();
+});
+document.getElementById('mode-box').addEventListener('click', ()=>{
+  const pos = CYCLABLE_MODE_INDICES.indexOf(selMode);
+  selMode = CYCLABLE_MODE_INDICES[(pos+1)%CYCLABLE_MODE_INDICES.length];
+  renderLobby();
+});
+document.getElementById('map-box').addEventListener('click', ()=>{
+  selMap = (selMap+1)%MAPS.length; renderLobby();
+});
+document.getElementById('online-link').addEventListener('click', ()=>{
+  const onlineModeIdx = MODES.findIndex(m=>m.id==='ONLINE');
+  selMode = onlineModeIdx;
+  document.getElementById('online-box').style.display = 'block';
+  document.getElementById('room-code-display').innerText='';
+  document.getElementById('online-status').innerText='';
+});
+document.getElementById('online-back-btn').addEventListener('click', ()=>{
+  closePeerConnection();
+  document.getElementById('online-box').style.display = 'none';
+  const firstOffline = CYCLABLE_MODE_INDICES[0];
+  selMode = firstOffline; renderLobby();
+});
+
+loadCharacters().then(renderLobby);
+document.getElementById('start-box-btn').addEventListener('click', ()=>{
+  document.getElementById('lobby-screen').style.display='none';
+  startNewGame();
+});
+document.getElementById('replay-btn').addEventListener('click', ()=>{
+  if(currentMode.id==='ONLINE'){ returnToLobby(); return; }
+  startNewGame();
+});
+
+/* ================= CANVAS / WORLD / CAMERA ================= */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){
+  // Sadece SCREEN/CANVAS boyutunu günceller; WORLD boyutu asla değişmez.
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', ()=>setTimeout(resizeCanvas, 50));
+document.addEventListener('fullscreenchange', ()=>setTimeout(resizeCanvas, 50));
+document.addEventListener('webkitfullscreenchange', ()=>setTimeout(resizeCanvas, 50));
+
+document.getElementById('start-play-btn').addEventListener('click', ()=>{
+  // Fullscreen/orientation-lock API'leri yalnızca doğrudan bir kullanıcı jestinden (bu tıklama) çağrılabilir.
+  try{
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+    if(req) req.call(el).catch(()=>{});
+  }catch(e){}
+  try{
+    if(screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
+  }catch(e){}
+  document.getElementById('start-overlay').style.display = 'none';
+  resizeCanvas();
+});
+
+const WORLD_SIZE_LOCAL = { w: 2400, h: 1400 };
+const WORLD_SIZE_ONLINE = { w: 1400, h: 900 };
+let worldWidth = WORLD_SIZE_LOCAL.w, worldHeight = WORLD_SIZE_LOCAL.h;
+const camera = { x:0, y:0 };
+function updateCamera(){
+  camera.x = worldWidth <= canvas.width ? worldWidth/2 : Math.max(canvas.width/2, Math.min(worldWidth-canvas.width/2, player.x));
+  camera.y = worldHeight <= canvas.height ? worldHeight/2 : Math.max(canvas.height/2, Math.min(worldHeight-canvas.height/2, player.y));
+}
+
+let score = 0;
+let gameState = 'LOBBY';
+let currentMap = MAPS[0], currentMode = MODES[0], currentChar = CHARACTERS[0], currentPlayerCount = PLAYER_COUNTS[0];
+
+let totalEnemiesToSpawn = 15, spawnedEnemiesCount = 0, maxConcurrentEnemies = 6;
+
+let carriedGems = 0;
+function rivalGemsTotal(){ return enemies.reduce((s,e)=>s+(e.gemsCarried||0),0); }
+const GEM_CAP = 10;
+let gemTimer = 90000;
+const GEM_DURATION = 90000;
+
+let ballScorePlayer = 0, ballScoreEnemy = 0;
+const BALL_TARGET = 3;
+let ballTimer = 120000;
+let ball = null, topGoal=null, bottomGoal=null;
+
+let walls = [], bushes = [], gems = [], spawnPoints = [];
+let lastGemSpawn = 0;
+
+const player = {
+  x:0,y:0, radius:20, speed:4, hp:100, maxHp:100,
+  superCharge:0, maxSuper:100, ammo:3, maxAmmo:3, nextAmmoTime:0, reloadTime:1300,
+  invulnUntil:0, color:'#2196f3', dashing:false, dashDirX:0, dashDirY:0, dashRemaining:0, dashHitSet:null,
+  shotSeq:0, lastShot:null, faceX:0, faceY:1, slowUntil:0, poisonUntil:0, poisonNextTick:0, poisonDmgTick:0, lastDamagedAt:0, respawnAt:0,
+  shieldGlowUntil:0, rootedUntil:0, leechOwner:null, leechUntil:0, leechHealTick:0, leechNextTick:0
+};
+let allies = [];
+
+/* ---- only the super joystick stays fixed; move/shoot appear where you touch ---- */
+function superBasePos(){ return { x:canvas.width-110, y:canvas.height-250 }; }
+
+const touchControls = {
+  moveTouchId:null, moveBase:{x:0,y:0}, moveDir:{x:0,y:0},
+  shootTouchId:null, shootBase:{x:0,y:0}, aimDirX:1, aimDirY:0, aimDist:0, isAiming:false,
+  superTouchId:null, superDirX:1, superDirY:0, superAiming:false
+};
+
+const bullets = [], enemyBullets = [], incomingBullets = [], bombs = [], enemies = [], particles = [], mines = [], beams = [], pendingBursts = [], wells = [], firePatches = [];
+
+// Her mermiye doğduğu world koordinatını (startX/startY) ve menzilini (maxRange) otomatik damgalar,
+// böylece performAttack/useSuper/enemyPerformAttack içindeki tek tek ateş noktalarına dokunmaya gerek kalmaz.
+let __currentAttackRange = 700;
+function makeRangedArray(arr, defaultRange){
+  const origPush = arr.push.bind(arr);
+  arr.push = function(obj){
+    if(obj.startX===undefined){ obj.startX = obj.x; obj.startY = obj.y; }
+    if(obj.maxRange===undefined){ obj.maxRange = obj.range!==undefined ? obj.range : (obj.boomerang ? Infinity : __currentAttackRange||defaultRange); }
+    return origPush(obj);
+  };
+}
+makeRangedArray(bullets, 700);
+makeRangedArray(enemyBullets, 550);
+makeRangedArray(incomingBullets, 700);
+let spawnInterval = null;
+
+/* ================= ONLINE (PeerJS ile: bağımsız açık kaynaklı - Claude'a/Anthropic'e bağlı DEĞİL, sadece bağlantının ilk kurulumunda kullanılır, sonrası cihazdan cihaza) ================= */
+let onlineRole = null; // 'host' | 'guest'
+let onlineRoomCode = null;
+let peer = null, conn = null, dcOpen = false;
+let remotePlayer = null;
+
+function genRoomCode(){ return String(Math.floor(1000+Math.random()*9000)); }
+function setOnlineStatus(msg){ document.getElementById('online-status').innerText = msg; }
+function setupDataChannel(connection){
+  conn = connection;
+  conn.on('open', ()=>{ dcOpen=true; setOnlineStatus('Bağlandı! Başlıyor...'); beginOnlineMatch(); });
+  conn.on('close', ()=>{ dcOpen=false; });
+  conn.on('error', ()=>{ dcOpen=false; });
+  conn.on('data', (msg)=>{
+    if(!remotePlayer || !msg || !msg.t) return;
+    if(msg.t==='state'){
+      remotePlayer.x=msg.x; remotePlayer.y=msg.y; remotePlayer.hp=msg.hp; remotePlayer.maxHp=msg.maxHp||100;
+      if(msg.faceX!==undefined){ remotePlayer.faceX=msg.faceX; remotePlayer.faceY=msg.faceY; }
+      const rc=CHARACTERS.find(c=>c.id===msg.charId);
+      if(rc){ remotePlayer.color=rc.color; remotePlayer.charData=rc; }
+      if(msg.name) remotePlayer.name = msg.name;
+    } else if(msg.t==='shot'){
+      incomingBullets.push({ x:msg.x, y:msg.y, vx:msg.dirX*msg.speed, vy:msg.dirY*msg.speed, radius:msg.radius||6, dmg:msg.dmg, color:'#ff8a80', range:msg.range||700 });
+    } else if(msg.t==='dead'){
+      if(gameState==='PLAYING'){ score+=500; showEndScreen(true); }
+    }
+  });
+}
+function closePeerConnection(){
+  if(conn){ try{ conn.close(); }catch(e){} }
+  if(peer){ try{ peer.destroy(); }catch(e){} }
+  peer=null; conn=null; dcOpen=false;
+}
+const PEER_ICE_CONFIG = { iceServers:[
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'},
+  {urls:'stun:global.stun.twilio.com:3478'}
+] };
+
+document.getElementById('create-room-btn').addEventListener('click', ()=>{
+  if(typeof Peer === 'undefined'){ setOnlineStatus('Bağlantı kütüphanesi yüklenemedi, internetini kontrol et.'); return; }
+  closePeerConnection();
+  const code = genRoomCode();
+  onlineRoomCode = code; onlineRole = 'host';
+  document.getElementById('room-code-display').innerText = code;
+  startHostPeer(code, 0);
+});
+function startHostPeer(code, attempt){
+  setOnlineStatus(attempt===0 ? 'Oda hazırlanıyor...' : 'Yeniden deneniyor... ('+(attempt+1)+')');
+  peer = new Peer('canbrawl_'+code, { config: PEER_ICE_CONFIG });
+  const slowTimer = setTimeout(()=>{
+    if(peer && !peer.open && onlineRole==='host' && onlineRoomCode===code){
+      closePeerConnection();
+      startHostPeer(code, attempt+1);
+    }
+  }, 4000);
+  peer.on('open', ()=>{ clearTimeout(slowTimer); setOnlineStatus('Kod: '+code+' — rakip bekleniyor...'); });
+  peer.on('connection', (connection)=>{ setupDataChannel(connection); });
+  peer.on('error', (err)=>{
+    clearTimeout(slowTimer);
+    if(err.type==='unavailable-id') setOnlineStatus('Bu kod meşgul, tekrar dene.');
+    else setOnlineStatus('Bağlantı hatası: '+err.type+' — tekrar dene.');
+  });
+}
+
+document.getElementById('join-room-btn').addEventListener('click', ()=>{
+  const code = document.getElementById('join-code-input').value.trim();
+  if(code.length!==4){ setOnlineStatus('4 haneli kodu gir.'); return; }
+  if(typeof Peer === 'undefined'){ setOnlineStatus('Bağlantı kütüphanesi yüklenemedi, internetini kontrol et.'); return; }
+  closePeerConnection();
+  onlineRoomCode = code; onlineRole = 'guest';
+  startGuestPeer(code, 0);
+});
+function startGuestPeer(code, attempt){
+  setOnlineStatus(attempt===0 ? 'Odaya bağlanılıyor...' : 'Yeniden deneniyor... ('+(attempt+1)+')');
+  peer = new Peer({ config: PEER_ICE_CONFIG });
+  const slowTimer = setTimeout(()=>{
+    if(peer && !peer.open && onlineRole==='guest' && onlineRoomCode===code){
+      closePeerConnection();
+      startGuestPeer(code, attempt+1);
+    }
+  }, 4000);
+  peer.on('open', ()=>{
+    clearTimeout(slowTimer);
+    const connection = peer.connect('canbrawl_'+code, { reliable:false });
+    setupDataChannel(connection);
+  });
+  peer.on('error', (err)=>{
+    clearTimeout(slowTimer);
+    if(err.type==='peer-unavailable') setOnlineStatus('Oda bulunamadı, kodu kontrol et.');
+    else setOnlineStatus('Bağlantı hatası: '+err.type+' — tekrar dene.');
+  });
+}
+
+let onlineSendInterval = null;
+function beginOnlineMatch(){
+  currentMap = MAPS[4]; // Stadyum: open, symmetric
+  currentChar = CHARACTERS[selChar];
+  currentMode = MODES.find(m=>m.id==='ONLINE');
+  currentPlayerCount = PLAYER_COUNTS[0];
+  document.getElementById('lobby-screen').style.display='none';
+  document.getElementById('online-box').style.display='none';
+  setupCommon();
+  score = 0;
+  worldWidth = WORLD_SIZE_ONLINE.w; worldHeight = WORLD_SIZE_ONLINE.h;
+  buildMapGeometry();
+  remotePlayer = { x:worldWidth/2, y: onlineRole==='host'? worldHeight*0.7 : worldHeight*0.3, radius:20, hp:100, maxHp:100, color:'#ff5252', name:'Rakip', faceX:0, faceY:1, charData:null, invulnUntil:0 };
+  player.x = worldWidth/2; player.y = onlineRole==='host'? worldHeight*0.3 : worldHeight*0.7;
+
+  gameState = 'PLAYING';
+  updateUI();
+
+  if(onlineSendInterval) clearInterval(onlineSendInterval);
+  onlineSendInterval = setInterval(()=>{
+    if(gameState!=='PLAYING' || currentMode.id!=='ONLINE') return;
+    if(conn && dcOpen){ try{ conn.send({t:'state', x:player.x, y:player.y, hp:player.hp, maxHp:player.maxHp, faceX:player.faceX, faceY:player.faceY, charId:currentChar.id, name:playerName}); }catch(e){} }
+  }, 100);
+}
+
+/* ================= TOUCH INPUT (fixed corner joysticks) ================= */
+canvas.addEventListener('touchstart',(e)=>{
+  e.preventDefault();
+  if(gameState!=='PLAYING') return;
+  for(let i=0;i<e.changedTouches.length;i++){
+    const t = e.changedTouches[i];
+    const sp = superBasePos();
+    if(Math.hypot(t.clientX-sp.x,t.clientY-sp.y) < 60 && touchControls.superTouchId===null && player.superCharge>=player.maxSuper){
+      touchControls.superTouchId = t.identifier; touchControls.superAiming = true;
+      touchControls.superDirX = 0; touchControls.superDirY = 1;
+      continue;
+    }
+    if(t.clientX < canvas.width/2 && touchControls.moveTouchId===null){
+      touchControls.moveTouchId = t.identifier; touchControls.moveBase = {x:t.clientX,y:t.clientY}; touchControls.moveDir = {x:0,y:0};
+    } else if(t.clientX >= canvas.width/2 && touchControls.shootTouchId===null){
+      touchControls.shootTouchId = t.identifier; touchControls.shootBase = {x:t.clientX,y:t.clientY}; touchControls.isAiming = true; touchControls.aimDist = 0;
+    }
+  }
+},{passive:false});
+
+canvas.addEventListener('touchmove',(e)=>{
+  e.preventDefault();
+  if(gameState!=='PLAYING') return;
+  for(let i=0;i<e.changedTouches.length;i++){
+    const t = e.changedTouches[i];
+    if(t.identifier===touchControls.moveTouchId){
+      const base = touchControls.moveBase;
+      const dx=t.clientX-base.x, dy=t.clientY-base.y;
+      const dist=Math.hypot(dx,dy), maxDist=55, angle=Math.atan2(dy,dx);
+      touchControls.moveDir.x = Math.cos(angle)*Math.min(dist/maxDist,1);
+      touchControls.moveDir.y = Math.sin(angle)*Math.min(dist/maxDist,1);
+    } else if(t.identifier===touchControls.shootTouchId){
+      const base = touchControls.shootBase;
+      const dx=t.clientX-base.x, dy=t.clientY-base.y;
+      const dist=Math.hypot(dx,dy), angle=Math.atan2(dy,dx);
+      if(dist>5){ touchControls.aimDirX=Math.cos(angle); touchControls.aimDirY=Math.sin(angle); }
+      touchControls.aimDist = Math.min(dist,120);
+    } else if(t.identifier===touchControls.superTouchId){
+      const base = superBasePos();
+      const dx=t.clientX-base.x, dy=t.clientY-base.y;
+      const dist=Math.hypot(dx,dy), angle=Math.atan2(dy,dx);
+      if(dist>5){ touchControls.superDirX=Math.cos(angle); touchControls.superDirY=Math.sin(angle); }
+    }
+  }
+},{passive:false});
+
+function resetTouch(id){
+  if(id===touchControls.moveTouchId){ touchControls.moveTouchId=null; touchControls.moveDir={x:0,y:0}; }
+  if(id===touchControls.shootTouchId){
+    touchControls.shootTouchId=null;
+    if(touchControls.isAiming){
+      if(currentMode.id==='BRAWLBALL' && ball && ball.heldBy===player){
+        kickBall(touchControls.aimDirX, touchControls.aimDirY, touchControls.aimDist);
+      } else {
+        performAttack(touchControls.aimDirX, touchControls.aimDirY, false, touchControls.aimDist);
+      }
+    }
+    touchControls.isAiming=false;
+  }
+  if(id===touchControls.superTouchId){
+    if(touchControls.superAiming && player.superCharge>=player.maxSuper) useSuper(touchControls.superDirX, touchControls.superDirY);
+    touchControls.superTouchId=null; touchControls.superAiming=false;
+  }
+}
+canvas.addEventListener('touchend',(e)=>{ for(let i=0;i<e.changedTouches.length;i++) resetTouch(e.changedTouches[i].identifier); });
+canvas.addEventListener('touchcancel',(e)=>{ for(let i=0;i<e.changedTouches.length;i++) resetTouch(e.changedTouches[i].identifier); });
+
+/* ================= HELPERS: WALLS / BUSHES / SPAWNS (world space) ================= */
+function buildMapGeometry(){
+  walls = currentMap.walls.map(w=>({ x:w.x*worldWidth, y:w.y*worldHeight, w:w.w*worldWidth, h:w.h*worldHeight }));
+  bushes = currentMap.bushes.map(b=>({ x:b.x*worldWidth, y:b.y*worldHeight, w:b.w*worldWidth, h:b.h*worldHeight }));
+  spawnPoints = currentMap.spawnPoints.map(s=>({ x:s.x*worldWidth, y:s.y*worldHeight }));
+}
+function resolveCircleRectCollision(entity, rect){
+  const nx = Math.max(rect.x, Math.min(entity.x, rect.x+rect.w));
+  const ny = Math.max(rect.y, Math.min(entity.y, rect.y+rect.h));
+  const dx = entity.x-nx, dy = entity.y-ny;
+  const dist = Math.hypot(dx,dy);
+  if(dist < entity.radius){
+    if(dist>0){ const overlap = entity.radius-dist; entity.x += (dx/dist)*overlap; entity.y += (dy/dist)*overlap; }
+    else entity.y -= entity.radius;
+  }
+}
+function applyWallCollisions(entity){ walls.forEach(w=>resolveCircleRectCollision(entity,w)); }
+function pushEntitySafe(entity, targetX, targetY){
+  const hit = segmentHitsWall(entity.x, entity.y, targetX, targetY);
+  if(hit){ entity.x = hit.x; entity.y = hit.y; }
+  else { entity.x = targetX; entity.y = targetY; }
+  applyWallCollisions(entity);
+  clampToWorld(entity);
+}
+function pushEnemyOutOf(e, entity){
+  const dx=e.x-entity.x, dy=e.y-entity.y, dist=Math.hypot(dx,dy);
+  const minDist = e.radius+entity.radius;
+  if(dist < minDist){
+    if(dist>0){ const overlap=minDist-dist; e.x += (dx/dist)*overlap; e.y += (dy/dist)*overlap; }
+    else { e.x += minDist; }
+  }
+}
+function pointInRect(px,py,r){ return px>r.x && px<r.x+r.w && py>r.y && py<r.y+r.h; }
+function bulletHitsWall(b){ return walls.some(w=>pointInRect(b.x,b.y,w)); }
+function segmentHitsWall(x0,y0,x1,y1){
+  const dist = Math.hypot(x1-x0,y1-y0);
+  const steps = Math.max(1, Math.ceil(dist/6));
+  for(let s=1;s<=steps;s++){
+    const t=s/steps;
+    const px=x0+(x1-x0)*t, py=y0+(y1-y0)*t;
+    if(walls.some(w=>pointInRect(px,py,w))) return {x:px,y:py};
+  }
+  return null;
+}
+function raycastWallDist(x0,y0,angle,maxRange){
+  const dirX=Math.cos(angle), dirY=Math.sin(angle);
+  const steps = Math.max(1, Math.ceil(maxRange/8));
+  for(let s=1;s<=steps;s++){
+    const d = (s/steps)*maxRange;
+    const px=x0+dirX*d, py=y0+dirY*d;
+    if(walls.some(w=>pointInRect(px,py,w))) return d;
+  }
+  return maxRange;
+}
+function isInBush(entity){ return bushes.some(b=>pointInRect(entity.x,entity.y,b)); }
+function isHiddenFrom(entity, viewer){ return isInBush(entity) && !isInBush(viewer) && Math.hypot(entity.x-viewer.x, entity.y-viewer.y) > 130; }
+function clampToWorld(entity){ entity.x = Math.max(entity.radius, Math.min(worldWidth-entity.radius, entity.x)); entity.y = Math.max(entity.radius, Math.min(worldHeight-entity.radius, entity.y)); }
+
+/* ================= ATTACKS ================= */
+function performAttack(dirX, dirY, isAlly, dragDist){
+  const p = isAlly ? ally : player;
+  const ch = isAlly ? ally.charData : currentChar;
+  if(p.ammo<=0) return;
+  const len = Math.hypot(dirX,dirY)||1; dirX/=len; dirY/=len;
+  __currentAttackRange = ch.range || 700;
+
+  switch(ch.attackType){
+    case 'sniper':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#e0f7fa',dmg:ch.dmg,isSuper:false,pierceLeft:ch.pierce,hitIds:[],owner:p});
+      break;
+    case 'shotgun': {
+      const baseAngle = Math.atan2(dirY,dirX);
+      for(let k=0;k<ch.pellets;k++){
+        const a = baseAngle - ch.spread/2 + ch.spread*(k/(ch.pellets-1));
+        bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*ch.bulletSpeed,vy:Math.sin(a)*ch.bulletSpeed,radius:ch.bulletRadius,color:'#fff59d',dmg:ch.dmg,isSuper:false,owner:p});
+      }
+      break;
+    }
+    case 'bomb': {
+      const throwDist = 90 + Math.min(dragDist||60,120)*1.5;
+      bombs.push({ startX:p.x, startY:p.y, targetX:p.x+dirX*throwDist, targetY:p.y+dirY*throwDist, elapsed:0, travelTime:520, splashRadius:ch.splashRadius, dmg:ch.dmg, owner:p });
+      break;
+    }
+    case 'dash':
+      p.dashing = true; p.dashDirX = dirX; p.dashDirY = dirY; p.dashRemaining = ch.dashDistance; p.dashHitSet = new Set(); p.invulnUntil = Date.now()+600;
+      break;
+    case 'frost':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#b3e5fc',dmg:ch.dmg,isSuper:false,frost:true,owner:p});
+      break;
+    case 'poison':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#aed581',dmg:ch.dmg,isSuper:false,poison:true,owner:p});
+      break;
+    case 'bumerang':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#ffa726',dmg:ch.dmg,isSuper:false,owner:p,
+        boomerang:true, startX:p.x, startY:p.y, maxRange:ch.range, returning:false, hitIds:[]});
+      break;
+    case 'zincir':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#fff59d',dmg:ch.dmg,isSuper:false,owner:p,
+        chain:true, chainsLeft:ch.chainCount, chainRadius:ch.chainRadius, chainFalloff:0.7});
+      break;
+    case 'mayin': {
+      const throwDist = 60 + Math.min(dragDist||60,120)*1.2;
+      mines.push({ x:p.x+dirX*throwDist, y:p.y+dirY*throwDist, radius:ch.mineRadius, dmg:ch.dmg, armAt:Date.now()+ch.mineArmTime, owner:p, triggered:false });
+      break;
+    }
+    case 'guduml':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#ce93d8',dmg:ch.dmg,isSuper:false,owner:p,
+        homing:true, homingStrength:ch.homingStrength, homingSpeed:ch.bulletSpeed});
+      break;
+    case 'lazer': {
+      const ang = Math.atan2(dirY,dirX);
+      fireLaser(p, ang, ch.range, ch.dmg, ch.beamWidth, false);
+      break;
+    }
+    case 'titresim': {
+      const radius = ch.range;
+      enemies.slice().forEach(e=>{ if(Math.hypot(e.x-p.x,e.y-p.y) < radius){ damageEnemy(e, ch.dmg); e.slowUntil = Date.now()+900; } });
+      beams.push({ type:'ring', x:p.x, y:p.y, radius, ttl:220, color:'#4dd0e1' });
+      createParticles(p.x,p.y,'#4dd0e1',16);
+      break;
+    }
+    case 'sekme':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#ff8a65',dmg:ch.dmg,isSuper:false,owner:p,
+        bounce:true, bouncesLeft:ch.bounces});
+      break;
+    case 'kanca':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#f06292',dmg:ch.dmg,isSuper:false,owner:p,
+        grapple:true, pullStrength:ch.pullStrength});
+      break;
+    case 'itis':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#80cbc4',dmg:ch.dmg,isSuper:false,owner:p,
+        knockback:ch.knockback});
+      break;
+    case 'vampir':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#ab47bc',dmg:ch.dmg,isSuper:false,owner:p,
+        vamp:true, vampRatio:ch.vampRatio});
+      break;
+    case 'seri': {
+      const now = Date.now();
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#78909c',dmg:ch.dmg,isSuper:false,owner:p});
+      pendingBursts.push({ owner:p, dirX, dirY, ch, shotsLeft:ch.burstCount-1, nextShotAt:now+ch.burstDelay, isSuper:false });
+      break;
+    }
+    case 'tuzak': {
+      const throwDist = 50 + Math.min(dragDist||60,120);
+      mines.push({ x:p.x+dirX*throwDist, y:p.y+dirY*throwDist, radius:ch.trapRadius, dmg:ch.dmg, armAt:Date.now()+ch.trapArmTime,
+        owner:p, persistent:true, hitsLeft:ch.trapHits, expiresAt:Date.now()+ch.trapDuration, nextTriggerAt:0 });
+      break;
+    }
+    case 'kalkan':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#64b5f6',dmg:ch.dmg,isSuper:false,owner:p,
+        grantShield:true, shieldAmount:ch.shieldAmount, shieldDuration:ch.shieldDuration});
+      break;
+    case 'yanki': {
+      const now = Date.now();
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#ba68c8',dmg:ch.dmg,isSuper:false,owner:p});
+      pendingBursts.push({ owner:p, dirX, dirY, ch, shotsLeft:1, nextShotAt:now+ch.echoDelay, isSuper:false });
+      break;
+    }
+    case 'ag':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#8d6e63',dmg:ch.dmg,isSuper:false,owner:p,
+        root:true, rootDuration:ch.rootDuration});
+      break;
+    case 'isirik':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#9ccc65',dmg:ch.dmg,isSuper:false,owner:p,
+        leech:true, leechDuration:ch.leechDuration, leechTick:ch.leechTick});
+      break;
+    case 'ikiz': {
+      const baseAngle = Math.atan2(dirY,dirX);
+      [-1,1].forEach(side=>{
+        const offAngle = baseAngle + side*0.5;
+        const sx = p.x+Math.cos(offAngle)*22, sy = p.y+Math.sin(offAngle)*22;
+        const aimAngle = baseAngle - side*ch.converge;
+        bullets.push({x:sx,y:sy,vx:Math.cos(aimAngle)*ch.bulletSpeed,vy:Math.sin(aimAngle)*ch.bulletSpeed,radius:ch.bulletRadius,color:'#4db6ac',dmg:Math.round(ch.dmg*0.7),isSuper:false,owner:p});
+      });
+      break;
+    }
+    case 'yercekimi': {
+      wells.push({ x:p.x+dirX*140, y:p.y+dirY*140, radius:ch.range, strength:ch.wellStrength, expiresAt:Date.now()+ch.wellDuration, owner:p });
+      break;
+    }
+    case 'isinlan': {
+      const dist = Math.min(ch.teleportDist, raycastWallDist(p.x,p.y,Math.atan2(dirY,dirX),ch.teleportDist));
+      const landX = p.x+dirX*dist, landY = p.y+dirY*dist;
+      createParticles(p.x,p.y,'#fff176',10);
+      p.x = landX; p.y = landY;
+      clampToWorld(p); applyWallCollisions(p);
+      createParticles(p.x,p.y,'#fff176',14);
+      enemies.slice().forEach(en=>{ if(Math.hypot(en.x-p.x,en.y-p.y) < en.radius+34){ damageEnemy(en, ch.dmg); } });
+      break;
+    }
+    case 'parcala':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#ff8a65',dmg:ch.dmg,isSuper:false,owner:p,
+        shatter:true, fragments:ch.fragments, shattered:false});
+      break;
+    case 'alev':
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#ff7043',dmg:ch.dmg,isSuper:false,owner:p,
+        firetrail:true, nextPatchAt:0, patchDuration:ch.patchDuration, patchTick:ch.patchTick, patchInterval:ch.patchInterval});
+      break;
+    default:
+      bullets.push({x:p.x,y:p.y,vx:dirX*ch.bulletSpeed,vy:dirY*ch.bulletSpeed,radius:ch.bulletRadius,color:'#ffeb3b',dmg:ch.dmg,isSuper:false,owner:p});
+  }
+
+  p.ammo--;
+  if(p.ammo < p.maxAmmo) p.nextAmmoTime = Date.now()+ch.reloadTime;
+
+  if(!isAlly && currentMode.id==='ONLINE'){
+    player.shotSeq++;
+    player.lastShot = { x:p.x, y:p.y, dirX, dirY, speed: ch.bulletSpeed||10, dmg: ch.dmg, radius: ch.bulletRadius||6, seq: player.shotSeq };
+    if(conn && dcOpen){
+      try{ conn.send({ t:'shot', x:p.x,y:p.y, dirX, dirY, speed: ch.bulletSpeed||10, dmg: ch.dmg, radius: ch.bulletRadius||6, range: ch.range||700 }); }catch(e){}
+    }
+  }
+}
+function useSuper(dirX,dirY){
+  player.superCharge = 0; updateUI();
+  const ch = currentChar;
+  const len = Math.hypot(dirX,dirY)||1; dirX/=len; dirY/=len;
+  __currentAttackRange = (ch.range || 700) * 1.3;
+
+  switch(ch.attackType){
+    case 'sniper': {
+      // Dev Mermi: kocaman, her şeyi delen tek atış
+      bullets.push({ x:player.x, y:player.y, vx:dirX*20, vy:dirY*20, radius:26, color:'#80deea', dmg:Math.round(ch.dmg*1.8), isSuper:true, pierceLeft:99, hitIds:[], owner:player });
+      break;
+    }
+    case 'dash': {
+      // Gölge Sıçraması: çok daha uzun, daha güçlü ve daha uzun süre dokunulmaz dash
+      player.dashing = true; player.dashDirX = dirX; player.dashDirY = dirY;
+      player.dashRemaining = ch.dashDistance*1.9; player.dashHitSet = new Set(); player.invulnUntil = Date.now()+1300;
+      break;
+    }
+    case 'bomb': {
+      // Büyük Bombardıman: geniş bir alana 3 bomba
+      [-0.4,0,0.4].forEach(off=>{
+        const a = Math.atan2(dirY,dirX)+off, ddx=Math.cos(a), ddy=Math.sin(a), throwDist=170;
+        bombs.push({ startX:player.x, startY:player.y, targetX:player.x+ddx*throwDist, targetY:player.y+ddy*throwDist, elapsed:0, travelTime:520, splashRadius:ch.splashRadius*1.15, dmg:Math.round(ch.dmg*1.3), owner:player });
+      });
+      break;
+    }
+    case 'shotgun': {
+      // Çifte Namlu: çok daha fazla saçma, geniş açı
+      const baseAngle = Math.atan2(dirY,dirX), pellets=9, spread=1.15;
+      for(let k=0;k<pellets;k++){
+        const a = baseAngle - spread/2 + spread*(k/(pellets-1));
+        bullets.push({ x:player.x, y:player.y, vx:Math.cos(a)*ch.bulletSpeed*1.1, vy:Math.sin(a)*ch.bulletSpeed*1.1, radius:ch.bulletRadius, color:'#fff176', dmg:Math.round(ch.dmg*1.2), isSuper:true, owner:player });
+      }
+      break;
+    }
+    case 'frost': {
+      // Donma Dalgası: anlık, çevredeki tüm düşmanlara hasar + ağır yavaşlatma
+      const radius = 190;
+      enemies.slice().forEach(e=>{ if(Math.hypot(e.x-player.x,e.y-player.y) < radius){ damageEnemy(e, Math.round(ch.dmg*1.6)); e.slowUntil = Date.now()+3200; } });
+      createParticles(player.x,player.y,'#b3e5fc',30);
+      break;
+    }
+    case 'poison': {
+      // Zehir Bulutu: çevredeki herkese hasar + uzun süreli zehir
+      const radius = 190;
+      enemies.slice().forEach(e=>{ if(Math.hypot(e.x-player.x,e.y-player.y) < radius){ damageEnemy(e, Math.round(ch.dmg*1.4)); e.poisonUntil = Date.now()+5000; e.poisonDmgTick = (ch.poisonDmg||3)*1.5; e.poisonNextTick = Date.now()+500; } });
+      createParticles(player.x,player.y,'#aed581',30);
+      break;
+    }
+    case 'bumerang': {
+      // Zırh Kırma: 3 güçlü bumerang aynı anda, geniş açıyla
+      [-0.35,0,0.35].forEach(off=>{
+        const a = Math.atan2(dirY,dirX)+off, ddx=Math.cos(a), ddy=Math.sin(a);
+        bullets.push({x:player.x,y:player.y,vx:ddx*ch.bulletSpeed*1.2,vy:ddy*ch.bulletSpeed*1.2,radius:ch.bulletRadius*1.2,color:'#ffb74d',dmg:Math.round(ch.dmg*1.3),isSuper:true,owner:player,
+          boomerang:true, startX:player.x, startY:player.y, maxRange:ch.range*1.3, returning:false, hitIds:[]});
+      });
+      break;
+    }
+    case 'zincir': {
+      // Ölümcül Nişan: çok daha güçlü, çok daha fazla seken dev bir yıldırım
+      bullets.push({x:player.x,y:player.y,vx:dirX*ch.bulletSpeed*1.3,vy:dirY*ch.bulletSpeed*1.3,radius:ch.bulletRadius*1.6,color:'#fff9c4',dmg:Math.round(ch.dmg*1.6),isSuper:true,owner:player,
+        chain:true, chainsLeft:ch.chainCount+3, chainRadius:ch.chainRadius*1.3, chainFalloff:0.85});
+      break;
+    }
+    case 'mayin': {
+      // Ölümcül Isırık: aynı anda 3 mayın, geniş yelpazede
+      const baseAngle = Math.atan2(dirY,dirX);
+      [-0.5,0,0.5].forEach(off=>{
+        const a=baseAngle+off, throwDist=140;
+        mines.push({ x:player.x+Math.cos(a)*throwDist, y:player.y+Math.sin(a)*throwDist, radius:ch.mineRadius*1.25, dmg:Math.round(ch.dmg*1.4), armAt:Date.now()+ch.mineArmTime, owner:player, triggered:false });
+      });
+      break;
+    }
+    case 'guduml': {
+      // Lav Yağmuru: çok daha güçlü, çoklu güdümlü roketler
+      [-0.3,-0.1,0.1,0.3].forEach(off=>{
+        const a = Math.atan2(dirY,dirX)+off;
+        bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*ch.bulletSpeed,vy:Math.sin(a)*ch.bulletSpeed,radius:ch.bulletRadius*1.3,color:'#e1bee7',dmg:Math.round(ch.dmg*1.15),isSuper:true,owner:player,
+          homing:true, homingStrength:ch.homingStrength*1.6, homingSpeed:ch.bulletSpeed});
+      });
+      break;
+    }
+    case 'lazer': {
+      // Şahin Saldırısı: çok daha geniş ve güçlü lazer
+      const ang = Math.atan2(dirY,dirX);
+      fireLaser(player, ang, ch.range*1.4, Math.round(ch.dmg*1.8), ch.beamWidth, true);
+      break;
+    }
+    case 'titresim': {
+      // Buzul Çağı: çok daha geniş ve güçlü şok dalgası
+      const radius = ch.range*1.7;
+      enemies.slice().forEach(e=>{ if(Math.hypot(e.x-player.x,e.y-player.y) < radius){ damageEnemy(e, Math.round(ch.dmg*1.6)); e.slowUntil = Date.now()+2600; } });
+      beams.push({ type:'ring', x:player.x, y:player.y, radius, ttl:320, color:'#80deea' });
+      createParticles(player.x,player.y,'#80deea',30);
+      break;
+    }
+    case 'sekme': {
+      // Kükreyiş Salvosu: çok daha fazla sekebilen, güçlü mermiler yelpaze halinde
+      const baseAngle = Math.atan2(dirY,dirX);
+      [-0.3,-0.1,0.1,0.3].forEach(off=>{
+        const a=baseAngle+off;
+        bullets.push({x:player.x,y:player.y,vx:Math.cos(a)*ch.bulletSpeed*1.15,vy:Math.sin(a)*ch.bulletSpeed*1.15,radius:ch.bulletRadius*1.2,color:'#ffab91',dmg:Math.round(ch.dmg*1.2),isSuper:true,owner:player,
+          bounce:true, bouncesLeft:ch.bounces+3});
+      });
+      break;
+    }
+    case 'kanca': {
+      // Diken Fırtınası: doğrudan yanına çeken güçlü kanca
+      bullets.push({x:player.x,y:player.y,vx:dirX*ch.bulletSpeed*1.3,vy:dirY*ch.bulletSpeed*1.3,radius:ch.bulletRadius*1.4,color:'#f48fb1',dmg:Math.round(ch.dmg*1.3),isSuper:true,owner:player,
+        grapple:true, pullStrength:0.95});
+      break;
+    }
+    case 'itis': {
+      // Zümrüt Çöküşü: çevredeki herkesi güçlüce geri iten anlık patlama
+      const radius = 160;
+      enemies.slice().forEach(e=>{
+        if(Math.hypot(e.x-player.x,e.y-player.y) < radius){
+          damageEnemy(e, Math.round(ch.dmg*1.3));
+          const dx=e.x-player.x, dy=e.y-player.y, d=Math.hypot(dx,dy)||1;
+          pushEntitySafe(e, e.x+(dx/d)*160, e.y+(dy/d)*160);
+        }
+      });
+      beams.push({ type:'ring', x:player.x, y:player.y, radius, ttl:250, color:'#4db6ac' });
+      createParticles(player.x,player.y,'#4db6ac',26);
+      break;
+    }
+    case 'vampir': {
+      // Kum Fırtınası: vuruşta çok daha fazla can çalan güçlü mermi
+      bullets.push({x:player.x,y:player.y,vx:dirX*ch.bulletSpeed*1.2,vy:dirY*ch.bulletSpeed*1.2,radius:ch.bulletRadius*1.3,color:'#ce93d8',dmg:Math.round(ch.dmg*1.4),isSuper:true,owner:player,
+        vamp:true, vampRatio:0.7, pierceLeft:2, hitIds:[]});
+      break;
+    }
+    case 'seri': {
+      // Kurşun Fırtınası: tek seferde 10 mermilik dev bir seri
+      const now = Date.now();
+      bullets.push({x:player.x,y:player.y,vx:dirX*ch.bulletSpeed*1.15,vy:dirY*ch.bulletSpeed*1.15,radius:ch.bulletRadius*1.3,color:'#90a4ae',dmg:Math.round(ch.dmg*1.3),isSuper:true,owner:player});
+      pendingBursts.push({ owner:player, dirX, dirY, ch, shotsLeft:9, nextShotAt:now+ch.burstDelay, isSuper:true });
+      break;
+    }
+    case 'tuzak': {
+      const baseAngle = Math.atan2(dirY,dirX);
+      [-0.5,0,0.5].forEach(off=>{
+        const a=baseAngle+off, throwDist=130;
+        mines.push({ x:player.x+Math.cos(a)*throwDist, y:player.y+Math.sin(a)*throwDist, radius:ch.trapRadius*1.2, dmg:Math.round(ch.dmg*1.3), armAt:Date.now()+ch.trapArmTime,
+          owner:player, persistent:true, hitsLeft:ch.trapHits+2, expiresAt:Date.now()+ch.trapDuration*1.4, nextTriggerAt:0 });
+      });
+      break;
+    }
+    case 'kalkan':
+      player.hp = Math.min(player.maxHp, player.hp + ch.shieldAmount*2.2);
+      player.shieldGlowUntil = Date.now()+ch.shieldDuration*1.6;
+      createParticles(player.x,player.y,'#64b5f6',22);
+      beams.push({ type:'ring', x:player.x, y:player.y, radius:40, ttl:300, color:'#64b5f6' });
+      updateUI();
+      break;
+    case 'yanki': {
+      const now = Date.now();
+      bullets.push({x:player.x,y:player.y,vx:dirX*ch.bulletSpeed*1.2,vy:dirY*ch.bulletSpeed*1.2,radius:ch.bulletRadius*1.3,color:'#ce93d8',dmg:Math.round(ch.dmg*1.3),isSuper:true,owner:player});
+      pendingBursts.push({ owner:player, dirX, dirY, ch, shotsLeft:3, nextShotAt:now+ch.echoDelay*0.7, isSuper:true });
+      break;
+    }
+    case 'ag': {
+      const radius = 200;
+      enemies.slice().forEach(e=>{ if(Math.hypot(e.x-player.x,e.y-player.y) < radius){ damageEnemy(e, Math.round(ch.dmg*0.8)); e.rootedUntil = Date.now()+ch.rootDuration*1.8; } });
+      beams.push({ type:'ring', x:player.x, y:player.y, radius, ttl:280, color:'#8d6e63' });
+      createParticles(player.x,player.y,'#8d6e63',22);
+      break;
+    }
+    case 'isirik':
+      bullets.push({x:player.x,y:player.y,vx:dirX*ch.bulletSpeed*1.15,vy:dirY*ch.bulletSpeed*1.15,radius:ch.bulletRadius*1.3,color:'#9ccc65',dmg:Math.round(ch.dmg*1.2),isSuper:true,owner:player,
+        leech:true, leechDuration:ch.leechDuration*1.8, leechTick:ch.leechTick*1.6, pierceLeft:3, hitIds:[]});
+      break;
+    case 'ikiz': {
+      const baseAngle = Math.atan2(dirY,dirX);
+      [-1.6,-0.8,0.8,1.6].forEach(side=>{
+        const offAngle = baseAngle + Math.sign(side)*0.6;
+        const sx = player.x+Math.cos(offAngle)*22, sy = player.y+Math.sin(offAngle)*22;
+        const aimAngle = baseAngle - Math.sign(side)*ch.converge*1.4;
+        bullets.push({x:sx,y:sy,vx:Math.cos(aimAngle)*ch.bulletSpeed*1.1,vy:Math.sin(aimAngle)*ch.bulletSpeed*1.1,radius:ch.bulletRadius*1.2,color:'#26a69a',dmg:Math.round(ch.dmg*0.9),isSuper:true,owner:player});
+      });
+      break;
+    }
+    case 'yercekimi':
+      wells.push({ x:player.x+dirX*170, y:player.y+dirY*170, radius:ch.range*1.6, strength:ch.wellStrength*1.8, expiresAt:Date.now()+ch.wellDuration*1.8, owner:player, dmgTick:Math.round(ch.dmg*0.2) });
+      break;
+    case 'isinlan': {
+      const dist = Math.min(ch.teleportDist*1.6, raycastWallDist(player.x,player.y,Math.atan2(dirY,dirX),ch.teleportDist*1.6));
+      createParticles(player.x,player.y,'#fff176',14);
+      player.x += dirX*dist; player.y += dirY*dist;
+      clampToWorld(player); applyWallCollisions(player);
+      createParticles(player.x,player.y,'#fff176',20);
+      enemies.slice().forEach(en=>{ if(Math.hypot(en.x-player.x,en.y-player.y) < en.radius+50){ damageEnemy(en, Math.round(ch.dmg*1.6)); } });
+      break;
+    }
+    case 'parcala':
+      bullets.push({x:player.x,y:player.y,vx:dirX*ch.bulletSpeed*1.1,vy:dirY*ch.bulletSpeed*1.1,radius:ch.bulletRadius*1.4,color:'#ff8a65',dmg:Math.round(ch.dmg*1.2),isSuper:true,owner:player,
+        shatter:true, fragments:ch.fragments+3, shattered:false});
+      break;
+    case 'alev':
+      bullets.push({x:player.x,y:player.y,vx:dirX*ch.bulletSpeed*1.1,vy:dirY*ch.bulletSpeed*1.1,radius:ch.bulletRadius*1.3,color:'#ff5722',dmg:Math.round(ch.dmg*1.2),isSuper:true,owner:player,
+        firetrail:true, nextPatchAt:0, patchDuration:ch.patchDuration*1.5, patchTick:ch.patchTick*1.6, patchInterval:ch.patchInterval*0.7});
+      break;
+    default: {
+      // Alev Patlaması (Ateş): 8 yönlü yıldız patlaması
+      const baseAngle = Math.atan2(dirY,dirX);
+      for(let k=0;k<8;k++){
+        const a = baseAngle + k*(Math.PI/4);
+        bullets.push({ x:player.x, y:player.y, vx:Math.cos(a)*11, vy:Math.sin(a)*11, radius:10, color:ch.color, dmg:Math.round(ch.dmg*2.2), isSuper:true, owner:player });
+      }
+    }
+  }
+}
+
+/* ================= ENEMIES ================= */
+const CLOSE_RANGE_STYLES = ['shotgun','titresim','mayin'];
+const LONG_RANGE_STYLES = ['sniper','lazer','zincir'];
+function aggroRangeFor(atk){ return CLOSE_RANGE_STYLES.includes(atk) ? 420 : LONG_RANGE_STYLES.includes(atk) ? 640 : 520; }
+
+let spawnPointCursor = 0;
+function pickSpawnPoint(){
+  if(spawnPoints.length===0) return {x:worldWidth/2,y:40};
+  const sp = spawnPoints[spawnPointCursor % spawnPoints.length];
+  spawnPointCursor++;
+  return sp;
+}
+function moveToward(entity, tx, ty, speed){
+  const dx=tx-entity.x, dy=ty-entity.y, dist=Math.hypot(dx,dy)||1;
+  let dirX=dx/dist, dirY=dy/dist;
+  const look = entity.radius+22;
+  const lookX=entity.x+dirX*look, lookY=entity.y+dirY*look;
+  if(walls.some(w=>pointInRect(lookX,lookY,w))){
+    const p1x=-dirY, p1y=dirX, p2x=dirY, p2y=-dirX;
+    const t1x=entity.x+p1x*look, t1y=entity.y+p1y*look;
+    const t2x=entity.x+p2x*look, t2y=entity.y+p2y*look;
+    const b1 = walls.some(w=>pointInRect(t1x,t1y,w));
+    const b2 = walls.some(w=>pointInRect(t2x,t2y,w));
+    if(!b1 && b2){ dirX=dirX+p1x*1.4; dirY=dirY+p1y*1.4; }
+    else if(!b2 && b1){ dirX=dirX+p2x*1.4; dirY=dirY+p2y*1.4; }
+    else if(!b1 && !b2){ dirX=p1x; dirY=p1y; }
+    else { dirX=-dirX; dirY=-dirY; }
+    const l=Math.hypot(dirX,dirY)||1; dirX/=l; dirY/=l;
+  }
+  entity.x += dirX*speed; entity.y += dirY*speed;
+  entity.faceX = dirX; entity.faceY = dirY;
+  return dist;
+}
+function wander(e, now, speedMul){
+  if(now>e.nextWanderTime){ e.wanderTarget = {x:e.homeSpawn.x+(Math.random()-0.5)*260, y:e.homeSpawn.y+(Math.random()-0.5)*260}; e.nextWanderTime = now+2500; }
+  moveToward(e, e.wanderTarget.x, e.wanderTarget.y, (e.speed||2)*speedMul);
+}
+const RIVAL_TEAM_COUNT = 3;
+const TEAM_COLORS = { 1:'#ff5252', 2:'#42a5f5', 3:'#ffca28' };
+let enemyTeamCursor = 0;
+function spawnOneEnemy(sp, offset){
+  const charData = CHARACTERS[Math.floor(Math.random()*CHARACTERS.length)];
+  const isBrawlBall = currentMode.id==='BRAWLBALL';
+  const type = isBrawlBall ? 'baller' : 'fighter';
+  const home = { x:sp.x+offset, y:sp.y+offset };
+  const teamId = (currentMode.id==='ELIMINATION') ? (enemyTeamCursor++ % RIVAL_TEAM_COUNT)+1 : 1;
+  enemies.push({
+    x:home.x, y:home.y, radius:19, type, charData,
+    speed: charData.speed*0.82,
+    hp: Math.round(charData.hp*0.65), maxHp: Math.round(charData.hp*0.65),
+    color: charData.color, teamId,
+    homeSpawn: home, wanderTarget:{x:home.x,y:home.y}, nextWanderTime:0, lastShotTime:0,
+    slowUntil:0, respawnAt:0, faceX:0, faceY:1, gemsCarried:0, lastDamagedAt:0,
+    aggroRange: aggroRangeFor(charData.attackType)
+  });
+  spawnedEnemiesCount++;
+}
+function spawnEnemy(){
+  if(gameState!=='PLAYING') return;
+  const teamSz = currentPlayerCount.size || 1;
+  const capElim = 4+teamSz*2, capGem = 2+teamSz*2;
+  if(currentMode.id==='ELIMINATION'){
+    if(spawnedEnemiesCount>=totalEnemiesToSpawn || enemies.length>=capElim) return;
+  } else if(currentMode.id==='GEMGRAB'){
+    if(enemies.length>=capGem) return;
+  } else return; // Brawl Ball bots are spawned once at match start, not on an interval
+
+  const sp = pickSpawnPoint();
+  // enemies spawn in a group matching the player's team size, for fairness (Tekli=1, İkili=2, Üçlü=3)
+  for(let i=0;i<teamSz;i++) spawnOneEnemy(sp, i*42);
+}
+function findAggroTarget(e){
+  const candidates = [player, ...allies.filter(a=>a.hp>0)];
+  if(currentMode.id==='ELIMINATION'){
+    enemies.forEach(o=>{ if(o!==e && o.hp>0 && o.teamId!==e.teamId) candidates.push(o); });
+  }
+  let best=null, bestDist=Infinity;
+  const range = e.aggroRange||520;
+  candidates.forEach(c=>{
+    if(isHiddenFrom(c, e)) return;
+    const d = Math.hypot(c.x-e.x, c.y-e.y);
+    if(d<range && d<bestDist){ bestDist=d; best=c; }
+  });
+  return best;
+}
+
+function enemyPerformAttack(e, target){
+  target = target || player;
+  const ch = e.charData;
+  const dx=target.x-e.x, dy=target.y-e.y, len=Math.hypot(dx,dy)||1;
+  const dirX=dx/len, dirY=dy/len;
+  const ownerTeam = e.teamId;
+  __currentAttackRange = (ch.range || 550) * 0.85;
+  switch(ch.attackType){
+    case 'shotgun': {
+      const baseAngle=Math.atan2(dirY,dirX), pellets=4, spread=0.5;
+      for(let k=0;k<pellets;k++){
+        const a=baseAngle-spread/2+spread*(k/(pellets-1));
+        enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(a)*8,vy:Math.sin(a)*8,radius:7,color:'#ffab40',dmg:Math.round(ch.dmg*0.6),ownerTeam});
+      }
+      break;
+    }
+    case 'sniper':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*12,vy:dirY*12,radius:8,color:'#ffab40',dmg:Math.round(ch.dmg*0.7),ownerTeam});
+      break;
+    case 'bomb':
+      bombs.push({startX:e.x,startY:e.y,targetX:target.x,targetY:target.y,elapsed:0,travelTime:600,splashRadius:ch.splashRadius*0.8,dmg:Math.round(ch.dmg*0.7),owner:e,ownerTeam});
+      break;
+    case 'frost':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*7,vy:dirY*7,radius:8,color:'#b3e5fc',dmg:Math.round(ch.dmg*0.6),slow:true,ownerTeam});
+      break;
+    case 'poison':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*7,vy:dirY*7,radius:8,color:'#aed581',dmg:Math.round(ch.dmg*0.5),poison:true,ownerTeam});
+      break;
+    case 'bumerang':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*8,vy:dirY*8,radius:8,color:'#ffa726',dmg:Math.round(ch.dmg*0.6),ownerTeam});
+      break;
+    case 'zincir':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*8,vy:dirY*8,radius:7,color:'#fff59d',dmg:Math.round(ch.dmg*0.6),ownerTeam});
+      break;
+    case 'mayin':
+      mines.push({ x:target.x, y:target.y, radius:(ch.mineRadius||85)*0.8, dmg:Math.round(ch.dmg*0.7), armAt:Date.now()+500, owner:e, ownerTeam, triggered:false });
+      break;
+    case 'guduml':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*6,vy:dirY*6,radius:8,color:'#ce93d8',dmg:Math.round(ch.dmg*0.6),homing:true,homingStrength:0.06,homingSpeed:6,ownerTeam});
+      break;
+    case 'lazer':
+      fireLaser(e, Math.atan2(dirY,dirX), (ch.range||520)*0.75, Math.round(ch.dmg*0.55), ch.beamWidth||16, false);
+      break;
+    case 'titresim': {
+      const range = ch.range||170;
+      const victims = [player, ...allies];
+      if(currentMode.id==='ELIMINATION'){ enemies.forEach(o=>{ if(o!==e && o.teamId!==ownerTeam) victims.push(o); }); }
+      victims.forEach(v=>{
+        if(v.hp>0 && Math.hypot(v.x-e.x,v.y-e.y) < range){
+          const now = Date.now();
+          if(enemies.includes(v)){
+            damageEnemy(v, Math.round(ch.dmg*0.5), false);
+          } else {
+            v.hp -= Math.round(ch.dmg*0.5); v.lastDamagedAt = now; createParticles(v.x,v.y,'#4dd0e1',6);
+            if(v===player){ player.invulnUntil = now+300; updateUI(); if(player.hp<=0) killPlayer(); }
+          }
+        }
+      });
+      break;
+    }
+    case 'sekme':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*7,vy:dirY*7,radius:7,color:'#ff8a65',dmg:Math.round(ch.dmg*0.6),ownerTeam});
+      break;
+    case 'kanca':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*8,vy:dirY*8,radius:7,color:'#f06292',dmg:Math.round(ch.dmg*0.6),ownerTeam});
+      break;
+    case 'itis':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*6,vy:dirY*6,radius:9,color:'#80cbc4',dmg:Math.round(ch.dmg*0.6),ownerTeam});
+      break;
+    case 'vampir':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*7,vy:dirY*7,radius:7,color:'#ab47bc',dmg:Math.round(ch.dmg*0.6),vampOwner:e,vampRatio:0.3,ownerTeam});
+      break;
+    case 'seri': {
+      const now = Date.now();
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*9,vy:dirY*9,radius:6,color:'#78909c',dmg:Math.round(ch.dmg*0.5),ownerTeam});
+      pendingBursts.push({ owner:e, dirX, dirY, ch:{bulletSpeed:9,bulletRadius:6,dmg:Math.round(ch.dmg*0.5)}, shotsLeft:2, nextShotAt:now+80, isSuper:false, isEnemy:true, ownerTeam });
+      break;
+    }
+    case 'tuzak':
+      mines.push({ x:target.x, y:target.y, radius:(ch.trapRadius||70)*0.8, dmg:Math.round(ch.dmg*0.6), armAt:Date.now()+500,
+        owner:e, ownerTeam, persistent:true, hitsLeft:2, expiresAt:Date.now()+(ch.trapDuration||9000)*0.7, nextTriggerAt:0 });
+      break;
+    case 'kalkan':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*8,vy:dirY*8,radius:7,color:'#64b5f6',dmg:Math.round(ch.dmg*0.6),ownerTeam,
+        grantShield:true, shieldOwner:e, shieldAmount:(ch.shieldAmount||35)*0.6, shieldDuration:(ch.shieldDuration||4000)*0.7});
+      break;
+    case 'yanki': {
+      const now = Date.now();
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*8,vy:dirY*8,radius:7,color:'#ba68c8',dmg:Math.round(ch.dmg*0.5),ownerTeam});
+      pendingBursts.push({ owner:e, dirX, dirY, ch:{bulletSpeed:8,bulletRadius:7,dmg:Math.round(ch.dmg*0.5)}, shotsLeft:1, nextShotAt:now+400, isSuper:false, isEnemy:true, ownerTeam });
+      break;
+    }
+    case 'ag':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*7,vy:dirY*7,radius:8,color:'#8d6e63',dmg:Math.round(ch.dmg*0.5),ownerTeam, root:true, rootDuration:(ch.rootDuration||1600)*0.7});
+      break;
+    case 'isirik':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*8,vy:dirY*8,radius:7,color:'#9ccc65',dmg:Math.round(ch.dmg*0.5),ownerTeam,
+        leech:true, leechDuration:(ch.leechDuration||3500)*0.7, leechTick:(ch.leechTick||3)*0.7, vampOwner:e});
+      break;
+    case 'ikiz': {
+      [-1,1].forEach(side=>{
+        const baseAngle=Math.atan2(dirY,dirX), offAngle=baseAngle+side*0.5, sx=e.x+Math.cos(offAngle)*18, sy=e.y+Math.sin(offAngle)*18, aimAngle=baseAngle-side*(ch.converge||0.22);
+        enemyBullets.push({x:sx,y:sy,vx:Math.cos(aimAngle)*8,vy:Math.sin(aimAngle)*8,radius:6,color:'#4db6ac',dmg:Math.round(ch.dmg*0.45),ownerTeam});
+      });
+      break;
+    }
+    case 'yercekimi':
+      wells.push({ x:target.x, y:target.y, radius:(ch.range||160)*0.8, strength:(ch.wellStrength||2.2)*0.7, expiresAt:Date.now()+(ch.wellDuration||1800)*0.7, owner:e, ownerTeam });
+      break;
+    case 'isinlan': {
+      const now2 = Date.now();
+      const dist = Math.min((ch.teleportDist||260)*0.7, raycastWallDist(e.x,e.y,Math.atan2(dirY,dirX),(ch.teleportDist||260)*0.7));
+      e.x += dirX*dist; e.y += dirY*dist;
+      clampToWorld(e); applyWallCollisions(e);
+      createParticles(e.x,e.y,'#fff176',10);
+      if(now2>player.invulnUntil && Math.hypot(player.x-e.x,player.y-e.y) < player.radius+30){
+        player.hp -= Math.round(ch.dmg*0.6); player.invulnUntil=now2+300; player.lastDamagedAt=now2; updateUI();
+        if(player.hp<=0) killPlayer();
+      }
+      allies.forEach(a=>{ if(a.hp>0 && Math.hypot(a.x-e.x,a.y-e.y) < a.radius+30){ a.hp-=Math.round(ch.dmg*0.6); a.lastDamagedAt=now2; } });
+      break;
+    }
+    case 'parcala':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*7,vy:dirY*7,radius:8,color:'#ff8a65',dmg:Math.round(ch.dmg*0.5),ownerTeam, shatter:true, fragments:3, shattered:false});
+      break;
+    case 'alev':
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*8,vy:dirY*8,radius:7,color:'#ff7043',dmg:Math.round(ch.dmg*0.5),ownerTeam,
+        firetrail:true, nextPatchAt:0, patchDuration:(ch.patchDuration||2200)*0.7, patchTick:(ch.patchTick||3)*0.7, patchInterval:ch.patchInterval||60});
+      break;
+    default:
+      enemyBullets.push({x:e.x,y:e.y,vx:dirX*7,vy:dirY*7,radius:7,color:'#ffab40',dmg:Math.round(ch.dmg*0.6),ownerTeam});
+  }
+}
+
+function updateEnemyAI(e, now, speedMul){
+  if(e.rootedUntil && now < e.rootedUntil) return;
+  if(currentMode.id==='BRAWLBALL' && ball){
+    if(ball.heldBy!==e){
+      const tx = ball.heldBy ? ball.heldBy.x : ball.x, ty = ball.heldBy ? ball.heldBy.y : ball.y;
+      moveToward(e, tx, ty, e.speed*speedMul);
+    }
+    return;
+  }
+
+  if(currentMode.id==='GEMGRAB'){
+    const nearestFoeDist = Math.min(...[player,...allies].map(v=>Math.hypot(v.x-e.x,v.y-e.y)));
+    let nearestGem=null, gd=Infinity;
+    gems.forEach(g=>{ const d=Math.hypot(g.x-e.x,g.y-e.y); if(d<gd){gd=d;nearestGem=g;} });
+    if(nearestGem && rivalGemsTotal()<GEM_CAP && nearestFoeDist>170){
+      moveToward(e, nearestGem.x, nearestGem.y, e.speed*speedMul*1.05);
+      if(gd < e.radius+nearestGem.radius){
+        gems.splice(gems.indexOf(nearestGem),1);
+        e.gemsCarried = (e.gemsCarried||0)+1;
+        updateUI();
+      }
+      return;
+    }
+  }
+
+  const target = findAggroTarget(e);
+  const distToTarget = target ? Math.hypot(target.x-e.x, target.y-e.y) : Infinity;
+  const atk = e.charData.attackType;
+
+  if(atk==='dash'){
+    if(target) moveToward(e, target.x, target.y, e.speed*speedMul);
+    else wander(e, now, speedMul*0.6);
+    return;
+  }
+
+  const keepDist = CLOSE_RANGE_STYLES.includes(atk) ? 150 : LONG_RANGE_STYLES.includes(atk) ? 320 : atk==='bomb' ? 260 : 220;
+  if(target){
+    if(distToTarget>keepDist+30){ moveToward(e, target.x, target.y, e.speed*speedMul); }
+    else if(distToTarget<keepDist-30){ moveToward(e, e.x-(target.x-e.x), e.y-(target.y-e.y), e.speed*speedMul); }
+    else {
+      const perpAngle = Math.atan2(target.y-e.y,target.x-e.x)+Math.PI/2;
+      moveToward(e, e.x+Math.cos(perpAngle)*40, e.y+Math.sin(perpAngle)*40, e.speed*speedMul*0.5);
+      e.faceX = (target.x-e.x)/(distToTarget||1); e.faceY = (target.y-e.y)/(distToTarget||1);
+    }
+    if(now-e.lastShotTime > (e.charData.reloadTime||1500) && distToTarget<keepDist+100){
+      e.lastShotTime = now;
+      enemyPerformAttack(e, target);
+    }
+  } else {
+    wander(e, now, speedMul*0.5);
+  }
+}
+function damageEnemy(e, dmg, awardScore){
+  if(awardScore===undefined) awardScore = true;
+  e.hp -= dmg;
+  e.lastDamagedAt = Date.now();
+  createParticles(e.x,e.y,e.color,4);
+  if(e.hp<=0){
+    createParticles(e.x,e.y,e.color,10);
+    if(currentMode.id==='GEMGRAB' && e.gemsCarried>0){
+      for(let k=0;k<e.gemsCarried;k++){
+        const ang=Math.random()*Math.PI*2, dist=8+Math.random()*28;
+        gems.push({ x:e.x+Math.cos(ang)*dist, y:e.y+Math.sin(ang)*dist, radius:8, bob:Math.random()*Math.PI*2 });
+      }
+      e.gemsCarried = 0;
+    }
+    if(currentMode.id!=='BRAWLBALL' && currentMode.id!=='GEMGRAB'){
+      const idx = enemies.indexOf(e);
+      if(idx!==-1) enemies.splice(idx,1);
+    }
+    if(awardScore) score += (e.charData && e.charData.attackType!=='dash') ? 150 : 100;
+  }
+}
+function chainLightning(fromEntity, dmg, chainsLeft, chainRadius, falloff, hitSet){
+  if(chainsLeft<=0) return;
+  let target=null, best=Infinity;
+  enemies.forEach(e=>{ if(hitSet.has(e) || e.hp<=0) return; const d=Math.hypot(e.x-fromEntity.x,e.y-fromEntity.y); if(d<chainRadius && d<best){best=d;target=e;} });
+  if(!target) return;
+  hitSet.add(target);
+  beams.push({ type:'beam', x1:fromEntity.x, y1:fromEntity.y, x2:target.x, y2:target.y, ttl:150, color:'#fff59d' });
+  const nextDmg = Math.round(dmg*falloff);
+  damageEnemy(target, nextDmg);
+  chainLightning(target, nextDmg, chainsLeft-1, chainRadius, falloff, hitSet);
+}
+function fireLaser(owner, angle, range, dmg, width, isSuperBeam){
+  const dirX=Math.cos(angle), dirY=Math.sin(angle);
+  const actualRange = raycastWallDist(owner.x, owner.y, angle, range);
+  const endX = owner.x+dirX*actualRange, endY = owner.y+dirY*actualRange;
+  beams.push({ type:'beam', x1:owner.x, y1:owner.y, x2:endX, y2:endY, ttl:isSuperBeam?260:150, color:isSuperBeam?'#fff176':'#ffd54f', width:isSuperBeam?width*1.8:width });
+  function distToSegment(px,py){
+    const vx=endX-owner.x, vy=endY-owner.y, len2=vx*vx+vy*vy||1;
+    let t=((px-owner.x)*vx+(py-owner.y)*vy)/len2; t=Math.max(0,Math.min(1,t));
+    const cx=owner.x+vx*t, cy=owner.y+vy*t;
+    return Math.hypot(px-cx,py-cy);
+  }
+  const isFriendly = (owner===player || allies.includes(owner));
+  if(isFriendly){
+    enemies.slice().forEach(e=>{ if(distToSegment(e.x,e.y) < width/2+e.radius){ damageEnemy(e, dmg); if(owner===player && !isSuperBeam) player.superCharge=Math.min(player.maxSuper, player.superCharge+8); } });
+  } else {
+    const now = Date.now();
+    if(now>player.invulnUntil && distToSegment(player.x,player.y) < width/2+player.radius){
+      player.hp -= dmg; player.invulnUntil = now+300; player.lastDamagedAt = now; createParticles(player.x,player.y,'#ff5252',6); updateUI();
+      if(player.hp<=0) killPlayer();
+    }
+    allies.forEach(a=>{ if(a.hp>0 && distToSegment(a.x,a.y) < width/2+a.radius){ a.hp -= dmg; a.lastDamagedAt = now; } });
+    if(currentMode.id==='ELIMINATION'){
+      enemies.slice().forEach(o=>{ if(o!==owner && o.teamId!==owner.teamId && distToSegment(o.x,o.y) < width/2+o.radius){ damageEnemy(o, dmg, false); } });
+    }
+  }
+}
+
+/* ================= GEMS / BALL ================= */
+function spawnGem(){
+  const cx=worldWidth*0.5, cy=worldHeight*0.5, ang=Math.random()*Math.PI*2, dist=Math.random()*90;
+  gems.push({ x:cx+Math.cos(ang)*dist, y:cy+Math.sin(ang)*dist, radius:8, bob:Math.random()*Math.PI*2 });
+}
+function setupBrawlBall(){
+  ball = { x:worldWidth/2, y:worldHeight/2, vx:0, vy:0, radius:22, heldBy:null, noPickupUntil:0 };
+  topGoal = { x:worldWidth*0.38, y:0, w:worldWidth*0.24, h:36 };
+  bottomGoal = { x:worldWidth*0.38, y:worldHeight-36, w:worldWidth*0.24, h:36 };
+}
+function kickBall(dirX, dirY, dragDist){
+  if(!ball || ball.heldBy!==player) return;
+  const len = Math.hypot(dirX,dirY)||1; dirX/=len; dirY/=len;
+  const power = 9 + Math.min(dragDist||60,120)*0.07;
+  ball.heldBy = null;
+  ball.vx = dirX*power; ball.vy = dirY*power;
+  ball.noPickupUntil = Date.now()+250;
+}
+function resetBallPositions(){
+  ball.x=worldWidth/2; ball.y=worldHeight/2; ball.vx=0; ball.vy=0; ball.heldBy=null; ball.noPickupUntil=Date.now()+400;
+  player.x=worldWidth/2; player.y=worldHeight*0.75;
+  if(allies.length){ allies.forEach((a,i)=>{ a.x=worldWidth/2-60-i*50; a.y=worldHeight*0.78; }); }
+  enemies.forEach((e,i)=>{ e.x=worldWidth/2+(i-1)*60; e.y=worldHeight*0.22; });
+}
+
+/* ================= PARTICLES ================= */
+function createParticles(x,y,color,count=6){
+  for(let i=0;i<count;i++) particles.push({ x,y, vx:(Math.random()-0.5)*5, vy:(Math.random()-0.5)*5, radius:Math.random()*3+2, color, alpha:1 });
+}
+
+/* ================= UI ================= */
+function updateUI(){
+  document.getElementById('hp-fill').style.width = Math.max(0,(player.hp/player.maxHp)*100)+'%';
+  document.getElementById('super-fill').style.width = (player.superCharge/player.maxSuper)*100+'%';
+  document.getElementById('score').innerText = score;
+
+  const ammoRow = document.getElementById('ammo-row');
+  ammoRow.innerHTML = '';
+  for(let i=0;i<player.maxAmmo;i++){
+    const pip = document.createElement('div');
+    pip.className = 'ammo-pip ' + (i<player.ammo ? 'filled':'empty');
+    ammoRow.appendChild(pip);
+  }
+
+  const label = document.getElementById('objective-label');
+  const value = document.getElementById('objective-value');
+  const obj2 = document.getElementById('objective-text2');
+  obj2.style.display='none';
+
+  if(currentMode.id==='ELIMINATION'){
+    label.innerText='KALAN DÜŞMAN'; value.innerText = enemies.length + (totalEnemiesToSpawn - spawnedEnemiesCount);
+  } else if(currentMode.id==='GEMGRAB'){
+    label.innerText='ELMASIN'; value.innerText = carriedGems+'/'+GEM_CAP;
+    obj2.style.display='block'; obj2.innerText = 'Rakip: '+rivalGemsTotal()+'  |  Süre: '+Math.ceil(gemTimer/1000)+'sn';
+  } else if(currentMode.id==='BRAWLBALL'){
+    label.innerText='SKOR'; value.innerText = ballScorePlayer+' - '+ballScoreEnemy;
+    obj2.style.display='block'; obj2.innerText = 'Süre: '+Math.ceil(ballTimer/1000)+'sn';
+  } else if(currentMode.id==='ONLINE'){
+    label.innerText='RAKİP CANI'; value.innerText = remotePlayer ? Math.max(0,Math.round(remotePlayer.hp)) : '-';
+  }
+}
+
+/* ================= GAME FLOW ================= */
+function setupCommon(){
+  bullets.length=0; enemyBullets.length=0; incomingBullets.length=0; bombs.length=0; enemies.length=0; particles.length=0; gems.length=0; mines.length=0; beams.length=0; pendingBursts.length=0; wells.length=0; firePatches.length=0;
+  player.shieldGlowUntil=0; player.rootedUntil=0; player.leechOwner=null; player.leechUntil=0;
+  spawnPointCursor = 0;
+  enemyTeamCursor = 0;
+
+  player.hp = currentChar.hp; player.maxHp = currentChar.hp;
+  player.speed = currentChar.speed;
+  player.superCharge = 0;
+  player.ammo = currentChar.maxAmmo; player.maxAmmo = currentChar.maxAmmo;
+  player.reloadTime = currentChar.reloadTime;
+  player.nextAmmoTime = 0; player.invulnUntil = 0; player.color = currentChar.color;
+  player.dashing=false; player.shotSeq=0; player.lastShot=null; player.respawnAt=0;
+
+  allies = [];
+  const teamSz = currentPlayerCount.size || 1;
+  for(let i=1;i<teamSz;i++){
+    let allyCharIdx = (selChar+i)%CHARACTERS.length;
+    const cd = CHARACTERS[allyCharIdx];
+    allies.push({ x:0, y:0, radius:20, hp:cd.hp, maxHp:cd.hp, speed:cd.speed, color:cd.color, name:cd.name, faceX:0, faceY:1,
+      ammo:cd.maxAmmo, maxAmmo:cd.maxAmmo, nextAmmoTime:0, reloadTime:cd.reloadTime, charData:cd, lastShotAt:0, invulnUntil:0, lastDamagedAt:0, respawnAt:0 });
+  }
+
+  document.getElementById('ui').classList.add('active');
+  document.getElementById('home-btn').classList.add('active');
+  document.getElementById('game-modal').classList.remove('active');
+}
+
+function startNewGame(){
+  currentChar = CHARACTERS[selChar];
+  currentMap = MAPS[selMap];
+  currentMode = MODES[selMode];
+  currentPlayerCount = PLAYER_COUNTS[selPlayerCount];
+
+  setupCommon();
+  worldWidth = WORLD_SIZE_LOCAL.w; worldHeight = WORLD_SIZE_LOCAL.h;
+  buildMapGeometry();
+
+  score = 0; spawnedEnemiesCount = 0;
+  carriedGems = 0; gemTimer = GEM_DURATION; lastGemSpawn = 0;
+  ballScorePlayer = 0; ballScoreEnemy = 0; ballTimer = 120000;
+
+  const ps = currentMap.playerSpawn || {x:.5,y:.5};
+  player.x = worldWidth*ps.x; player.y = worldHeight*ps.y;
+  allies.forEach((a,i)=>{ a.x = player.x-70-i*55; a.y = player.y; });
+
+  if(currentMode.id==='BRAWLBALL'){
+    setupBrawlBall(); resetBallPositions();
+    const teamSz = currentPlayerCount.size || 1;
+    const goalCenterX = topGoal.x+topGoal.w/2, goalFrontY = topGoal.y+topGoal.h+70;
+    for(let i=0;i<teamSz;i++){
+      const spread = (i-(teamSz-1)/2)*70;
+      spawnOneEnemy({x:goalCenterX+spread, y:goalFrontY}, 0);
+    }
+  }
+
+  gameState = 'PLAYING';
+  updateUI();
+
+  if(spawnInterval) clearInterval(spawnInterval);
+  if(currentMode.id!=='ONLINE' && currentMode.id!=='BRAWLBALL'){
+    spawnInterval = setInterval(spawnEnemy, currentMode.id==='ELIMINATION' ? 1200 : 2200);
+  }
+}
+
+function returnToLobby(){
+  gameState = 'LOBBY';
+  if(spawnInterval) clearInterval(spawnInterval);
+  if(onlineSendInterval) clearInterval(onlineSendInterval);
+  closePeerConnection();
+  document.getElementById('ui').classList.remove('active');
+  document.getElementById('home-btn').classList.remove('active');
+  document.getElementById('game-modal').classList.remove('active');
+  document.getElementById('online-box').style.display = 'none';
+  document.getElementById('character-picker').classList.remove('active');
+  if(MODES[selMode].id==='ONLINE') selMode = CYCLABLE_MODE_INDICES[0];
+  document.getElementById('lobby-screen').style.display='block';
+  renderLobby();
+}
+
+function isPlayerDown(){ return !!(player.respawnAt && Date.now() < player.respawnAt); }
+function killPlayer(){
+  if(currentMode.id!=='GEMGRAB' && currentMode.id!=='BRAWLBALL'){
+    showEndScreen(false);
+    return;
+  }
+  // Elmas Avı / Savaş Topu: ölüm maçı bitirmez, 10 saniye sonra yeniden doğar
+  createParticles(player.x,player.y,'#ff5252',20);
+  if(currentMode.id==='GEMGRAB' && carriedGems>0){
+    for(let k=0;k<carriedGems;k++){
+      const ang=Math.random()*Math.PI*2, dist=8+Math.random()*28;
+      gems.push({ x:player.x+Math.cos(ang)*dist, y:player.y+Math.sin(ang)*dist, radius:8, bob:Math.random()*Math.PI*2 });
+    }
+    carriedGems = 0;
+  }
+  if(currentMode.id==='BRAWLBALL' && ball && ball.heldBy===player){ ball.heldBy=null; ball.noPickupUntil=Date.now()+300; }
+  player.hp = 0;
+  player.respawnAt = Date.now()+10000;
+  updateUI();
+}
+function showEndScreen(isWin){
+  gameState = 'GAMEOVER';
+  if(spawnInterval) clearInterval(spawnInterval);
+  if(onlineSendInterval) clearInterval(onlineSendInterval);
+  if(currentMode.id==='ONLINE' && conn && dcOpen && !isWin){
+    try{ conn.send({t:'dead'}); }catch(e){}
+  }
+  document.getElementById('home-btn').classList.remove('active');
+
+  const modal = document.getElementById('game-modal');
+  const title = document.getElementById('modal-title');
+  const desc = document.getElementById('modal-desc');
+
+  if(currentMode.id==='GEMGRAB' && gemTimer<=0){
+    const rt = rivalGemsTotal();
+    const won = carriedGems>rt, draw = carriedGems===rt;
+    title.innerText = draw ? 'BERABERE!' : (won?'KAZANDIN!':'KAYBETTİN!');
+    title.style.color = draw?'#ffc107':(won?'#4caf50':'#f44336');
+    desc.innerText = 'Sen: '+carriedGems+' elmas — Rakip: '+rt+' elmas. Skor: '+score;
+  } else if(isWin){
+    title.innerText = 'KAZANDIN!'; title.style.color='#4caf50'; title.style.textShadow='0 0 12px rgba(76,175,80,.7)';
+    desc.innerText = 'Toplam Skor: '+score;
+  } else {
+    title.innerText = 'KAYBETTİN!'; title.style.color='#f44336'; title.style.textShadow='0 0 12px rgba(244,67,54,.7)';
+    desc.innerText = 'Toplam Skor: '+score;
+  }
+  document.getElementById('replay-btn').innerText = currentMode.id==='ONLINE' ? 'LOBİYE DÖN' : 'TEKRAR OYNA';
+  modal.classList.add('active');
+}
+
+/* ================= ALLY AI ================= */
+function updateAllies(now){
+  allies.forEach(ally=>updateOneAlly(ally, now));
+}
+function updateOneAlly(ally, now){
+  if(!ally || ally.hp<=0) return;
+  if(ally.rootedUntil && now < ally.rootedUntil) return;
+  let target=null, best=Infinity;
+  enemies.forEach(e=>{ const d=Math.hypot(e.x-ally.x,e.y-ally.y); if(d<best){best=d;target=e;} });
+  if(currentMode.id==='BRAWLBALL' && ball){
+    if(ball.heldBy!==ally){
+      const tx = ball.heldBy ? ball.heldBy.x : ball.x, ty = ball.heldBy ? ball.heldBy.y : ball.y;
+      const dx=tx-ally.x, dy=ty-ally.y, dist=Math.hypot(dx,dy)||1;
+      ally.x += (dx/dist)*ally.speed*0.9; ally.y += (dy/dist)*ally.speed*0.9;
+      ally.faceX=dx/dist; ally.faceY=dy/dist;
+    }
+  } else if(target && best<420){
+    const dx=target.x-ally.x, dy=target.y-ally.y, dist=Math.hypot(dx,dy)||1;
+    ally.faceX=dx/dist; ally.faceY=dy/dist;
+    if(dist>160){ ally.x += (dx/dist)*ally.speed; ally.y += (dy/dist)*ally.speed; }
+    if(now-ally.lastShotAt > (ally.reloadTime*0.6) && ally.ammo>0){
+      ally.lastShotAt = now;
+      const a = Math.atan2(dy,dx);
+      bullets.push({x:ally.x,y:ally.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,radius:6,color:'#c5e1a5',dmg:ally.charData.dmg,isSuper:false,owner:ally,range:ally.charData.range||700});
+      ally.ammo--;
+    }
+  } else {
+    const dx=player.x-ally.x, dy=player.y-ally.y, dist=Math.hypot(dx,dy)||1;
+    if(dist>90){ ally.x += (dx/dist)*ally.speed*0.8; ally.y += (dy/dist)*ally.speed*0.8; ally.faceX=dx/dist; ally.faceY=dy/dist; }
+  }
+  if(ally.ammo<ally.maxAmmo && now>=ally.nextAmmoTime){ ally.ammo++; if(ally.ammo<ally.maxAmmo) ally.nextAmmoTime=now+ally.reloadTime; }
+  clampToWorld(ally);
+  applyWallCollisions(ally);
+}
+
+/* ================= UPDATE LOOP ================= */
+function update(){
+  if(gameState!=='PLAYING') return;
+  if(isPortrait()) return;
+  const now = Date.now();
+
+  if(player.respawnAt){
+    if(now >= player.respawnAt){
+      player.respawnAt = 0;
+      player.hp = player.maxHp;
+      const ps = currentMap.playerSpawn || {x:.5,y:.5};
+      player.x = worldWidth*ps.x; player.y = worldHeight*ps.y;
+      player.invulnUntil = now+1500;
+      player.lastDamagedAt = now;
+      updateUI();
+    } else {
+      player.invulnUntil = now+1000; // yeniden doğana kadar hasarsız kalsın
+    }
+  }
+  const playerDown = isPlayerDown();
+
+  allies.forEach((ally,ai)=>{
+    if(ally.hp<=0){
+      if(!ally.respawnAt){
+        if(currentMode.id==='GEMGRAB' || currentMode.id==='BRAWLBALL') ally.respawnAt = now+10000;
+        else ally.respawnAt = -1; // ELIMINATION: kalıcı ölüm
+      } else if(ally.respawnAt>0 && now>=ally.respawnAt){
+        ally.respawnAt = 0; ally.hp = ally.maxHp;
+        ally.x = player.x-70-ai*55; ally.y = player.y;
+        ally.invulnUntil = now+1500; ally.lastDamagedAt = now;
+      }
+    }
+  });
+
+  if(playerDown){
+    // beklerken hareket/saldırı yok, ama geri kalan her şey (botlar, top, elmaslar) devam eder
+  } else if(player.dashing){
+    const step = Math.min(currentChar.dashSpeed, player.dashRemaining);
+    player.x += player.dashDirX*step; player.y += player.dashDirY*step;
+    player.dashRemaining -= step;
+    clampToWorld(player);
+    applyWallCollisions(player);
+    enemies.forEach(e=>{
+      if(!player.dashHitSet.has(e) && Math.hypot(player.x-e.x,player.y-e.y) < player.radius+e.radius+6){
+        player.dashHitSet.add(e); damageEnemy(e, currentChar.dmg); createParticles(e.x,e.y,e.color,8);
+        player.superCharge = Math.min(player.maxSuper, player.superCharge+15);
+      }
+    });
+    if(player.dashRemaining<=0) player.dashing=false;
+  } else {
+    const pSpeedMul = now < player.rootedUntil ? 0 : (now < player.slowUntil ? 0.55 : 1);
+    player.x += touchControls.moveDir.x*player.speed*pSpeedMul;
+    player.y += touchControls.moveDir.y*player.speed*pSpeedMul;
+    clampToWorld(player);
+    applyWallCollisions(player);
+  }
+
+  if(touchControls.isAiming){ player.faceX = touchControls.aimDirX; player.faceY = touchControls.aimDirY; }
+  else if(touchControls.moveDir.x || touchControls.moveDir.y){
+    const mlen = Math.hypot(touchControls.moveDir.x, touchControls.moveDir.y)||1;
+    player.faceX = touchControls.moveDir.x/mlen; player.faceY = touchControls.moveDir.y/mlen;
+  }
+
+  if(player.ammo < player.maxAmmo && now >= player.nextAmmoTime){
+    player.ammo++;
+    if(player.ammo < player.maxAmmo) player.nextAmmoTime = now + player.reloadTime;
+  }
+
+  if(allies.length && currentMode.id!=='ONLINE') updateAllies(now);
+
+  for(let i=bullets.length-1;i>=0;i--){
+    const b = bullets[i];
+    if(b.homing){
+      let target=null, best=Infinity;
+      enemies.forEach(e=>{ const d=Math.hypot(e.x-b.x,e.y-b.y); if(d<best){best=d;target=e;} });
+      if(target){
+        const desiredAng = Math.atan2(target.y-b.y, target.x-b.x);
+        const curAng = Math.atan2(b.vy,b.vx);
+        let diff = desiredAng-curAng;
+        while(diff>Math.PI) diff-=Math.PI*2; while(diff<-Math.PI) diff+=Math.PI*2;
+        const turn = Math.max(-b.homingStrength,Math.min(b.homingStrength,diff));
+        const newAng = curAng+turn;
+        b.vx = Math.cos(newAng)*b.homingSpeed; b.vy = Math.sin(newAng)*b.homingSpeed;
+      }
+    }
+    if(b.boomerang && !b.returning && Math.hypot(b.x-b.startX,b.y-b.startY) >= b.maxRange){
+      b.returning = true; b.hitIds.length = 0;
+    }
+    if(b.boomerang && b.returning && b.owner){
+      const spd = Math.hypot(b.vx,b.vy)||9;
+      const dx=b.owner.x-b.x, dy=b.owner.y-b.y, d=Math.hypot(dx,dy)||1;
+      b.vx = (dx/d)*spd; b.vy = (dy/d)*spd;
+      if(d<28){ bullets.splice(i,1); continue; }
+    }
+    const prevX=b.x, prevY=b.y;
+    b.x+=b.vx; b.y+=b.vy;
+    if(b.x<0||b.x>worldWidth||b.y<0||b.y>worldHeight){ bullets.splice(i,1); continue; }
+    if(!b.boomerang && Math.hypot(b.x-b.startX,b.y-b.startY) > b.maxRange){ bullets.splice(i,1); continue; }
+    if(!b.isSuper && !b.boomerang){
+      const hit = segmentHitsWall(prevX,prevY,b.x,b.y);
+      if(hit){
+        if(b.bounce && b.bouncesLeft>0){
+          b.x=hit.x; b.y=hit.y;
+          b.vx=-b.vx; b.vy=-b.vy; b.bouncesLeft--;
+          b.x+=b.vx*2; b.y+=b.vy*2;
+          createParticles(b.x,b.y,'#ff8a65',4);
+        } else {
+          b.x=hit.x; b.y=hit.y;
+          createParticles(b.x,b.y,'#bbb',4); bullets.splice(i,1); continue;
+        }
+      }
+    }
+  }
+  for(let i=enemyBullets.length-1;i>=0;i--){
+    const b = enemyBullets[i];
+    if(b.homing){
+      let ht=player, hd=Math.hypot(player.x-b.x,player.y-b.y);
+      allies.forEach(a=>{ if(a.hp>0){ const d=Math.hypot(a.x-b.x,a.y-b.y); if(d<hd){hd=d;ht=a;} } });
+      if(currentMode.id==='ELIMINATION' && b.ownerTeam){
+        enemies.forEach(o=>{ if(o.teamId!==b.ownerTeam && o.hp>0){ const d=Math.hypot(o.x-b.x,o.y-b.y); if(d<hd){hd=d;ht=o;} } });
+      }
+      const desiredAng = Math.atan2(ht.y-b.y, ht.x-b.x);
+      const curAng = Math.atan2(b.vy,b.vx);
+      let diff = desiredAng-curAng;
+      while(diff>Math.PI) diff-=Math.PI*2; while(diff<-Math.PI) diff+=Math.PI*2;
+      const turn = Math.max(-b.homingStrength,Math.min(b.homingStrength,diff));
+      const newAng = curAng+turn;
+      b.vx = Math.cos(newAng)*b.homingSpeed; b.vy = Math.sin(newAng)*b.homingSpeed;
+    }
+    const prevX=b.x, prevY=b.y;
+    b.x+=b.vx; b.y+=b.vy;
+    if(b.x<0||b.x>worldWidth||b.y<0||b.y>worldHeight){ enemyBullets.splice(i,1); continue; }
+    if(Math.hypot(b.x-b.startX,b.y-b.startY) > b.maxRange){ enemyBullets.splice(i,1); continue; }
+    const wallHit = segmentHitsWall(prevX,prevY,b.x,b.y);
+    if(wallHit){ b.x=wallHit.x; b.y=wallHit.y; createParticles(b.x,b.y,'#bbb',4); enemyBullets.splice(i,1); continue; }
+    let hitVictim = null;
+    if(now > player.invulnUntil && Math.hypot(b.x-player.x,b.y-player.y) < b.radius+player.radius) hitVictim = player;
+    if(!hitVictim){ allies.forEach(a=>{ if(!hitVictim && a.hp>0 && Math.hypot(b.x-a.x,b.y-a.y) < b.radius+a.radius) hitVictim = a; }); }
+    if(!hitVictim && currentMode.id==='ELIMINATION' && b.ownerTeam){
+      enemies.forEach(o=>{ if(!hitVictim && o.teamId!==b.ownerTeam && o.hp>0 && Math.hypot(b.x-o.x,b.y-o.y) < b.radius+o.radius) hitVictim = o; });
+    }
+    if(b.shatter && !b.shattered){
+      b.shattered = true;
+      const baseA = Math.atan2(b.vy,b.vx), spd = Math.hypot(b.vx,b.vy);
+      for(let fk=0; fk<(b.fragments||3); fk++){
+        const a = baseA + (fk-((b.fragments||3)-1)/2) * 0.4;
+        enemyBullets.push({x:b.x,y:b.y,vx:Math.cos(a)*spd*0.8,vy:Math.sin(a)*spd*0.8,radius:b.radius*0.6,color:b.color,dmg:Math.round(b.dmg*0.4),ownerTeam:b.ownerTeam,range:160});
+      }
+    }
+    if(hitVictim && enemies.includes(hitVictim)){
+      damageEnemy(hitVictim, b.dmg, false);
+      if(b.slow) hitVictim.slowUntil = now+1200;
+      if(b.poison){ hitVictim.poisonUntil = now+2500; hitVictim.poisonNextTick = now+500; hitVictim.poisonDmgTick = 3; }
+      if(b.vampOwner && b.vampOwner.hp>0){ b.vampOwner.hp = Math.min(b.vampOwner.maxHp, b.vampOwner.hp + b.dmg*(b.vampRatio||0.3)); }
+      if(b.grantShield && b.shieldOwner && b.shieldOwner.hp>0){ b.shieldOwner.hp = Math.min(b.shieldOwner.maxHp, b.shieldOwner.hp + b.shieldAmount); b.shieldOwner.shieldGlowUntil = now+b.shieldDuration; }
+      if(b.root){ hitVictim.rootedUntil = now + b.rootDuration; }
+      if(b.leech && b.vampOwner){ hitVictim.leechOwner = b.vampOwner; hitVictim.leechUntil = now+b.leechDuration; hitVictim.leechHealTick = b.leechTick; hitVictim.leechNextTick = now+500; }
+      enemyBullets.splice(i,1);
+    } else if(hitVictim){
+      hitVictim.hp -= b.dmg; hitVictim.lastDamagedAt = now; createParticles(hitVictim.x,hitVictim.y,'#ff5252',6);
+      if(hitVictim===player) player.invulnUntil = now+300;
+      if(b.slow) hitVictim.slowUntil = now+1200;
+      if(b.poison && hitVictim===player){ player.poisonUntil = now+2500; player.poisonNextTick = now+500; player.poisonDmgTick = 3; }
+      if(b.vampOwner && b.vampOwner.hp>0){ b.vampOwner.hp = Math.min(b.vampOwner.maxHp, b.vampOwner.hp + b.dmg*(b.vampRatio||0.3)); }
+      if(b.grantShield && b.shieldOwner && b.shieldOwner.hp>0){ b.shieldOwner.hp = Math.min(b.shieldOwner.maxHp, b.shieldOwner.hp + b.shieldAmount); b.shieldOwner.shieldGlowUntil = now+b.shieldDuration; }
+      if(b.root){ hitVictim.rootedUntil = now + b.rootDuration; }
+      if(b.leech && b.vampOwner){ hitVictim.leechOwner = b.vampOwner; hitVictim.leechUntil = now+b.leechDuration; hitVictim.leechHealTick = b.leechTick; hitVictim.leechNextTick = now+500; }
+      enemyBullets.splice(i,1); updateUI();
+      if(hitVictim===player && player.hp<=0){ killPlayer(); return; }
+    }
+  }
+  for(let i=incomingBullets.length-1;i>=0;i--){
+    const b = incomingBullets[i];
+    const prevX2=b.x, prevY2=b.y;
+    b.x+=b.vx; b.y+=b.vy;
+    if(b.x<0||b.x>worldWidth||b.y<0||b.y>worldHeight){ incomingBullets.splice(i,1); continue; }
+    if(Math.hypot(b.x-b.startX,b.y-b.startY) > b.maxRange){ incomingBullets.splice(i,1); continue; }
+    const wallHit2 = segmentHitsWall(prevX2,prevY2,b.x,b.y);
+    if(wallHit2){ b.x=wallHit2.x; b.y=wallHit2.y; createParticles(b.x,b.y,'#bbb',4); incomingBullets.splice(i,1); continue; }
+    if(now > player.invulnUntil && Math.hypot(b.x-player.x,b.y-player.y) < b.radius+player.radius){
+      player.hp -= b.dmg; player.invulnUntil = now+300; player.lastDamagedAt = now; createParticles(player.x,player.y,'#ff5252',6);
+      incomingBullets.splice(i,1); updateUI();
+      if(player.hp<=0){ killPlayer(); return; }
+    }
+  }
+  if(player.poisonUntil && now < player.poisonUntil && now >= (player.poisonNextTick||0)){
+    player.poisonNextTick = now+500;
+    player.hp -= (player.poisonDmgTick||3); player.lastDamagedAt = now; createParticles(player.x,player.y,'#aed581',3); updateUI();
+    if(player.hp<=0){ killPlayer(); return; }
+  }
+  if(player.leechUntil && now < player.leechUntil && now >= (player.leechNextTick||0)){
+    player.leechNextTick = now+500;
+    const tick = player.leechHealTick||3;
+    player.hp -= tick; player.lastDamagedAt = now; createParticles(player.x,player.y,'#9ccc65',3);
+    if(player.leechOwner && player.leechOwner.hp>0){ player.leechOwner.hp = Math.min(player.leechOwner.maxHp, player.leechOwner.hp+tick); }
+    updateUI();
+    if(player.hp<=0){ killPlayer(); return; }
+  } else if(player.leechUntil && now >= player.leechUntil){
+    player.leechOwner = null; player.leechUntil = 0;
+  }
+  for(let i=bombs.length-1;i>=0;i--){
+    const bm = bombs[i];
+    bm.elapsed += 16.6;
+    const t = Math.min(1, bm.elapsed/bm.travelTime);
+    bm.x = bm.startX + (bm.targetX-bm.startX)*t;
+    bm.y = bm.startY + (bm.targetY-bm.startY)*t;
+    if(t>=1){
+      createParticles(bm.targetX,bm.targetY,'#ffb74d',14);
+      const thrownByPlayerSide = (bm.owner===player || allies.includes(bm.owner));
+      if(thrownByPlayerSide){
+        enemies.slice().forEach(e=>{ if(Math.hypot(e.x-bm.targetX,e.y-bm.targetY)<bm.splashRadius){ damageEnemy(e, bm.dmg); if(bm.owner===player) player.superCharge=Math.min(player.maxSuper,player.superCharge+12); } });
+      } else {
+        if(now > player.invulnUntil && Math.hypot(player.x-bm.targetX,player.y-bm.targetY)<bm.splashRadius){
+          player.hp -= bm.dmg; player.invulnUntil = now+300; player.lastDamagedAt = now; updateUI();
+          if(player.hp<=0){ killPlayer(); return; }
+        }
+        allies.forEach(ally=>{ if(ally.hp>0 && Math.hypot(ally.x-bm.targetX,ally.y-bm.targetY)<bm.splashRadius){ ally.hp -= bm.dmg; ally.lastDamagedAt = now; } });
+        if(currentMode.id==='ELIMINATION' && bm.ownerTeam){
+          enemies.slice().forEach(o=>{ if(o.teamId!==bm.ownerTeam && Math.hypot(o.x-bm.targetX,o.y-bm.targetY)<bm.splashRadius){ damageEnemy(o, bm.dmg, false); } });
+        }
+      }
+      bombs.splice(i,1);
+    }
+  }
+
+  for(let i=mines.length-1;i>=0;i--){
+    const m = mines[i];
+    if(m.persistent && m.expiresAt && now>=m.expiresAt){ mines.splice(i,1); continue; }
+    if(now < m.armAt) continue;
+    if(m.persistent && m.nextTriggerAt && now<m.nextTriggerAt) continue;
+    const ownerIsPlayerSide = (m.owner===player || allies.includes(m.owner));
+    let triggered = false;
+    if(ownerIsPlayerSide){
+      enemies.forEach(e=>{ if(!triggered && Math.hypot(e.x-m.x,e.y-m.y) < m.radius*0.4+e.radius){ triggered = true; } });
+    } else {
+      if(Math.hypot(player.x-m.x,player.y-m.y) < m.radius*0.4+player.radius) triggered = true;
+      allies.forEach(a=>{ if(!triggered && a.hp>0 && Math.hypot(a.x-m.x,a.y-m.y) < m.radius*0.4+a.radius) triggered = true; });
+      if(!triggered && currentMode.id==='ELIMINATION' && m.ownerTeam){
+        enemies.forEach(o=>{ if(!triggered && o.teamId!==m.ownerTeam && Math.hypot(o.x-m.x,o.y-m.y) < m.radius*0.4+o.radius) triggered = true; });
+      }
+    }
+    if(triggered){
+      createParticles(m.x,m.y,'#7cb342',18);
+      beams.push({ type:'ring', x:m.x, y:m.y, radius:m.radius, ttl:200, color:'#aed581' });
+      if(ownerIsPlayerSide){
+        enemies.slice().forEach(e=>{ if(Math.hypot(e.x-m.x,e.y-m.y) < m.radius){ damageEnemy(e, m.dmg); if(m.owner===player) player.superCharge=Math.min(player.maxSuper, player.superCharge+10); } });
+      } else {
+        if(now>player.invulnUntil && Math.hypot(player.x-m.x,player.y-m.y) < m.radius){
+          player.hp -= m.dmg; player.invulnUntil = now+300; player.lastDamagedAt = now; updateUI();
+          if(player.hp<=0){ killPlayer(); return; }
+        }
+        allies.forEach(a=>{ if(a.hp>0 && Math.hypot(a.x-m.x,a.y-m.y) < m.radius){ a.hp -= m.dmg; a.lastDamagedAt = now; } });
+        if(currentMode.id==='ELIMINATION' && m.ownerTeam){
+          enemies.slice().forEach(o=>{ if(o.teamId!==m.ownerTeam && Math.hypot(o.x-m.x,o.y-m.y) < m.radius){ damageEnemy(o, m.dmg, false); } });
+        }
+      }
+      if(m.persistent){
+        m.hitsLeft--;
+        if(m.hitsLeft<=0){ mines.splice(i,1); } else { m.nextTriggerAt = now+700; }
+      } else {
+        mines.splice(i,1);
+      }
+    }
+  }
+  for(let i=beams.length-1;i>=0;i--){ beams[i].ttl -= 16.6; if(beams[i].ttl<=0) beams.splice(i,1); }
+
+  for(let i=pendingBursts.length-1;i>=0;i--){
+    const pb = pendingBursts[i];
+    if(now < pb.nextShotAt) continue;
+    if(pb.owner.hp<=0){ pendingBursts.splice(i,1); continue; }
+    if(pb.isEnemy){
+      enemyBullets.push({x:pb.owner.x,y:pb.owner.y,vx:pb.dirX*pb.ch.bulletSpeed,vy:pb.dirY*pb.ch.bulletSpeed,radius:pb.ch.bulletRadius,color:'#78909c',dmg:pb.ch.dmg,ownerTeam:pb.ownerTeam,range:(pb.ch.range||550)*0.85});
+    } else {
+      bullets.push({x:pb.owner.x,y:pb.owner.y,vx:pb.dirX*pb.ch.bulletSpeed*(pb.isSuper?1.15:1),vy:pb.dirY*pb.ch.bulletSpeed*(pb.isSuper?1.15:1),
+        radius:pb.ch.bulletRadius*(pb.isSuper?1.3:1),color:pb.isSuper?'#90a4ae':'#78909c',dmg:Math.round(pb.ch.dmg*(pb.isSuper?1.3:1)),isSuper:pb.isSuper,owner:pb.owner,range:pb.ch.range||700});
+    }
+    pb.shotsLeft--;
+    pb.nextShotAt = now + (pb.ch.burstDelay||70);
+    if(pb.shotsLeft<=0) pendingBursts.splice(i,1);
+  }
+
+  for(let i=enemies.length-1;i>=0;i--){
+    const e = enemies[i];
+    if(e.hp<=0 && (currentMode.id==='BRAWLBALL' || currentMode.id==='GEMGRAB') && e.respawnAt===0){ e.respawnAt = now+10000; }
+    if(e.respawnAt && now<e.respawnAt) continue;
+    if(e.respawnAt && now>=e.respawnAt){ e.hp=e.maxHp; e.respawnAt=0; e.x=e.homeSpawn.x; e.y=e.homeSpawn.y; }
+
+    const speedMul = now < e.slowUntil ? 0.4 : 1;
+    if(e.poisonUntil && now < e.poisonUntil && now >= (e.poisonNextTick||0)){
+      e.poisonNextTick = now+500;
+      damageEnemy(e, e.poisonDmgTick||3);
+      if(e.hp<=0){ continue; }
+    }
+
+    updateEnemyAI(e, now, speedMul);
+    clampToWorld(e);
+    applyWallCollisions(e);
+    pushEnemyOutOf(e, player);
+    allies.forEach(ally=>{ if(ally.hp>0) pushEnemyOutOf(e, ally); });
+
+    if(e.charData && e.charData.attackType==='dash'){
+      if(now > player.invulnUntil && Math.hypot(player.x-e.x,player.y-e.y) < player.radius+e.radius+2){
+        player.hp -= 0.5; player.lastDamagedAt = now; updateUI();
+        if(player.hp<=0){ killPlayer(); return; }
+      }
+      allies.forEach(ally=>{ if(ally.hp>0 && Math.hypot(ally.x-e.x,ally.y-e.y) < ally.radius+e.radius+2){ ally.hp -= 0.5; ally.lastDamagedAt = now; } });
+      if(currentMode.id==='ELIMINATION'){
+        enemies.forEach(o=>{ if(o!==e && o.teamId!==e.teamId && o.hp>0 && Math.hypot(o.x-e.x,o.y-e.y) < o.radius+e.radius+2){ damageEnemy(o, 0.5, false); } });
+      }
+    }
+    if(e.type==='baller'){ allies.forEach(ally=>{ if(Math.hypot(ally.x-e.x,ally.y-e.y) < ally.radius+e.radius+2){ ally.hp -= 0.3; ally.lastDamagedAt = now; } }); }
+
+    for(let j=bullets.length-1;j>=0;j--){
+      const b = bullets[j];
+      if((b.pierceLeft!==undefined || b.boomerang) && b.hitIds.includes(e)) continue;
+      if(Math.hypot(b.x-e.x,b.y-e.y) < b.radius+e.radius){
+        if(b.frost) e.slowUntil = now + (currentChar.slowDuration||1500);
+        if(b.poison){ e.poisonUntil = now + (currentChar.poisonDuration||3000); e.poisonDmgTick = currentChar.poisonDmg||3; e.poisonNextTick = now+500; }
+        if(b.owner===player && !b.isSuper) player.superCharge = Math.min(player.maxSuper, player.superCharge+12);
+        const wasAlive = e.hp>0;
+        damageEnemy(e, b.dmg);
+        if(b.chain){ chainLightning(e, b.dmg, b.chainsLeft, b.chainRadius, b.chainFalloff, new Set([e])); }
+        if(b.grapple && b.owner){ const dx=b.owner.x-e.x, dy=b.owner.y-e.y; pushEntitySafe(e, e.x+dx*b.pullStrength, e.y+dy*b.pullStrength); }
+        if(b.knockback && b.owner){ const dx=e.x-b.owner.x, dy=e.y-b.owner.y, d=Math.hypot(dx,dy)||1; pushEntitySafe(e, e.x+(dx/d)*b.knockback, e.y+(dy/d)*b.knockback); }
+        if(b.vamp && b.owner){ b.owner.hp = Math.min(b.owner.maxHp, b.owner.hp + b.dmg*b.vampRatio); }
+        if(b.grantShield && b.owner){ b.owner.hp = Math.min(b.owner.maxHp, b.owner.hp + b.shieldAmount); b.owner.shieldGlowUntil = now + b.shieldDuration; }
+        if(b.root){ e.rootedUntil = now + b.rootDuration; }
+        if(b.leech && b.owner){ e.leechOwner = b.owner; e.leechUntil = now + b.leechDuration; e.leechHealTick = b.leechTick; e.leechNextTick = now+500; }
+        if(b.shatter && !b.shattered){
+          b.shattered = true;
+          const baseA = Math.atan2(b.vy,b.vx), spd = Math.hypot(b.vx,b.vy);
+          for(let fk=0; fk<b.fragments; fk++){
+            const a = baseA + (fk-(b.fragments-1)/2) * 0.4;
+            bullets.push({x:b.x,y:b.y,vx:Math.cos(a)*spd*0.8,vy:Math.sin(a)*spd*0.8,radius:b.radius*0.6,color:b.color,dmg:Math.round(b.dmg*0.4),isSuper:false,owner:b.owner,range:180});
+          }
+        }
+        if(b.boomerang){ b.hitIds.push(e); }
+        else if(b.pierceLeft!==undefined){ b.hitIds.push(e); b.pierceLeft--; if(b.pierceLeft<0) bullets.splice(j,1); }
+        else if(!b.isSuper) bullets.splice(j,1);
+        if(wasAlive && e.hp<=0) break;
+      }
+    }
+  }
+
+  for(let a=0;a<enemies.length;a++){
+    for(let b=a+1;b<enemies.length;b++){
+      const e1=enemies[a], e2=enemies[b];
+      if((e1.respawnAt&&now<e1.respawnAt)||(e2.respawnAt&&now<e2.respawnAt)) continue;
+      const dx=e1.x-e2.x, dy=e1.y-e2.y, dist=Math.hypot(dx,dy), minDist=e1.radius+e2.radius;
+      if(dist<minDist && dist>0){
+        const overlap=(minDist-dist)/2, ux=dx/dist, uy=dy/dist;
+        e1.x+=ux*overlap; e1.y+=uy*overlap; e2.x-=ux*overlap; e2.y-=uy*overlap;
+      }
+    }
+  }
+
+  if(currentMode.id==='GEMGRAB'){
+    gemTimer -= 16.6;
+    if(now-lastGemSpawn>2500 && gems.length<6){ spawnGem(); lastGemSpawn=now; }
+    for(let i=gems.length-1;i>=0;i--){
+      const g=gems[i];
+      if(Math.hypot(player.x-g.x,player.y-g.y) < player.radius+g.radius && carriedGems<GEM_CAP){
+        gems.splice(i,1); carriedGems++; score+=20; updateUI();
+      }
+    }
+    if(gemTimer<=0){ showEndScreen(carriedGems>=rivalGemsTotal()); return; }
+    updateUI();
+  }
+
+  if(currentMode.id==='BRAWLBALL' && ball){
+    ballTimer -= 16.6;
+
+    if(ball.heldBy){
+      const holder = ball.heldBy;
+      if(holder.hp<=0){ ball.heldBy=null; ball.noPickupUntil=now+250; }
+      else {
+        const fx = holder.faceX||0, fy = holder.faceY||1;
+        const offset = holder.radius + ball.radius + 6;
+        ball.x = holder.x + fx*offset; ball.y = holder.y + fy*offset; ball.vx=0; ball.vy=0;
+      }
+    } else if(now >= ball.noPickupUntil){
+      const allyHolder = allies.find(a=>a.hp>0 && Math.hypot(ball.x-a.x,ball.y-a.y) < ball.radius+a.radius);
+      if(Math.hypot(ball.x-player.x,ball.y-player.y) < ball.radius+player.radius){ ball.heldBy = player; }
+      else if(allyHolder){ ball.heldBy = allyHolder; allyHolder.ballHoldUntil = now+700; }
+      else { enemies.forEach(e=>{ if(e.type==='baller' && (!e.respawnAt||now>=e.respawnAt) && Math.hypot(ball.x-e.x,ball.y-e.y) < ball.radius+e.radius){ ball.heldBy = e; e.ballHoldUntil = now+700; } }); }
+    }
+
+    if(allies.includes(ball.heldBy) && now>=(ball.heldBy.ballHoldUntil||0)){
+      const holder = ball.heldBy;
+      const dx=topGoal.x+topGoal.w/2-holder.x, dy=topGoal.y-holder.y, len=Math.hypot(dx,dy)||1;
+      ball.heldBy=null; ball.vx=(dx/len)*12; ball.vy=(dy/len)*12; ball.noPickupUntil=now+250;
+    }
+    if(ball.heldBy && ball.heldBy.type==='baller' && now>=(ball.heldBy.ballHoldUntil||0)){
+      const holder=ball.heldBy;
+      const dx=bottomGoal.x+bottomGoal.w/2-holder.x, dy=bottomGoal.y-holder.y, len=Math.hypot(dx,dy)||1;
+      ball.heldBy=null; ball.vx=(dx/len)*12; ball.vy=(dy/len)*12; ball.noPickupUntil=now+250;
+    }
+
+    ball.x+=ball.vx; ball.y+=ball.vy; ball.vx*=0.96; ball.vy*=0.96;
+    if(ball.x<ball.radius){ ball.x=ball.radius; ball.vx*=-0.6; }
+    if(ball.x>worldWidth-ball.radius){ ball.x=worldWidth-ball.radius; ball.vx*=-0.6; }
+    walls.forEach(w=>{
+      const nx = Math.max(w.x, Math.min(ball.x, w.x+w.w));
+      const ny = Math.max(w.y, Math.min(ball.y, w.y+w.h));
+      const dx = ball.x-nx, dy = ball.y-ny;
+      const dist = Math.hypot(dx,dy);
+      if(dist < ball.radius){
+        if(dist>0){
+          const overlap = ball.radius-dist, ux=dx/dist, uy=dy/dist;
+          ball.x += ux*overlap; ball.y += uy*overlap;
+          const dot = ball.vx*ux + ball.vy*uy;
+          ball.vx = (ball.vx - 2*dot*ux)*0.7; ball.vy = (ball.vy - 2*dot*uy)*0.7;
+        } else { ball.y -= ball.radius; ball.vy *= -0.7; }
+      }
+    });
+
+    const inTopGoalX = ball.x>topGoal.x && ball.x<topGoal.x+topGoal.w;
+    const inBottomGoalX = ball.x>bottomGoal.x && ball.x<bottomGoal.x+bottomGoal.w;
+    if(inTopGoalX && ball.y < 6){
+      ballScorePlayer++; createParticles(ball.x,ball.y,'#ffeb3b',16); updateUI();
+      if(ballScorePlayer>=BALL_TARGET){ score+=500; showEndScreen(true); return; }
+      resetBallPositions();
+    } else if(!inTopGoalX && ball.y < ball.radius){
+      ball.y = ball.radius; ball.vy*=-0.6;
+    } else if(inBottomGoalX && ball.y > worldHeight-6){
+      ballScoreEnemy++; createParticles(ball.x,ball.y,'#ff5252',16); updateUI();
+      if(ballScoreEnemy>=BALL_TARGET){ showEndScreen(false); return; }
+      resetBallPositions();
+    } else if(!inBottomGoalX && ball.y > worldHeight-ball.radius){
+      ball.y = worldHeight-ball.radius; ball.vy*=-0.6;
+    }
+    if(ballTimer<=0){ showEndScreen(ballScorePlayer>=ballScoreEnemy); return; }
+    updateUI();
+  }
+
+  for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.alpha-=0.04; if(p.alpha<=0) particles.splice(i,1); }
+
+  if(currentMode.id==='ELIMINATION' && spawnedEnemiesCount>=totalEnemiesToSpawn && enemies.length===0){ showEndScreen(true); }
+
+  applyHealthRegen(now);
+}
+
+/* ================= HEALTH REGEN (Brawl Stars usulü: savaşta hasar almadan bekleyince can dolar) ================= */
+const REGEN_DELAY = 3000;     // hasar almadan geçmesi gereken süre (ms)
+const REGEN_RATE = 0.055;     // saniyede maxHp'nin bu oranı kadar can dolar
+function regenOne(entity, now){
+  if(!entity || entity.hp<=0 || entity.hp>=entity.maxHp) return;
+  if(now - (entity.lastDamagedAt||0) < REGEN_DELAY) return;
+  entity.hp = Math.min(entity.maxHp, entity.hp + entity.maxHp*REGEN_RATE*(16.6/1000));
+}
+function applyHealthRegen(now){
+  regenOne(player, now);
+  allies.forEach(a=>regenOne(a, now));
+  enemies.forEach(e=>regenOne(e, now));
+}
+
+/* ================= DRAW LOOP ================= */
+function drawWalls(){
+  walls.forEach(w=>{ ctx.fillStyle=currentMap.wallColor; ctx.fillRect(w.x,w.y,w.w,w.h); ctx.strokeStyle=currentMap.wallEdge; ctx.lineWidth=3; ctx.strokeRect(w.x,w.y,w.w,w.h); });
+}
+function drawBushes(){
+  bushes.forEach(b=>{
+    ctx.fillStyle=currentMap.bushColor;
+    const r=14;
+    ctx.beginPath();
+    ctx.moveTo(b.x+r,b.y); ctx.arcTo(b.x+b.w,b.y,b.x+b.w,b.y+b.h,r); ctx.arcTo(b.x+b.w,b.y+b.h,b.x,b.y+b.h,r); ctx.arcTo(b.x,b.y+b.h,b.x,b.y,r); ctx.arcTo(b.x,b.y,b.x+b.w,b.y,r);
+    ctx.closePath(); ctx.fill(); ctx.strokeStyle=currentMap.bushEdge; ctx.lineWidth=2; ctx.stroke();
+  });
+}
+function drawGems(){
+  const t=Date.now()/300;
+  gems.forEach(g=>{
+    const bob=Math.sin(t+g.bob)*3;
+    ctx.save(); ctx.translate(g.x,g.y+bob); ctx.rotate(Math.PI/4);
+    ctx.fillStyle='#33d9b2'; ctx.fillRect(-6,-6,12,12); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(-6,-6,12,12);
+    ctx.restore();
+  });
+}
+function drawAimIndicator(entity, ch, dirX, dirY, dist){
+  const angle = Math.atan2(dirY,dirX);
+  ctx.save();
+  if(ch.attackType==='sniper'){
+    ctx.strokeStyle='rgba(224,247,250,.6)'; ctx.lineWidth=2; ctx.setLineDash([4,6]);
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(entity.x+dirX*ch.range,entity.y+dirY*ch.range); ctx.stroke();
+  } else if(ch.attackType==='shotgun'){
+    ctx.fillStyle='rgba(255,245,157,.22)';
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y);
+    ctx.arc(entity.x,entity.y,ch.range*0.55, angle-ch.spread/2, angle+ch.spread/2);
+    ctx.closePath(); ctx.fill();
+  } else if(ch.attackType==='bomb'){
+    const throwDist = 90+Math.min(dist||60,120)*1.5;
+    const lx=entity.x+dirX*throwDist, ly=entity.y+dirY*throwDist;
+    ctx.strokeStyle='rgba(255,183,77,.7)'; ctx.lineWidth=2; ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(lx,ly); ctx.stroke();
+    ctx.setLineDash([]); ctx.strokeStyle='rgba(255,183,77,.9)';
+    ctx.beginPath(); ctx.arc(lx,ly,ch.splashRadius,0,Math.PI*2); ctx.stroke();
+  } else if(ch.attackType==='dash'){
+    ctx.fillStyle='rgba(142,36,170,.25)';
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y);
+    ctx.arc(entity.x,entity.y,ch.dashDistance, angle-0.18, angle+0.18);
+    ctx.closePath(); ctx.fill();
+  } else if(ch.attackType==='lazer'){
+    ctx.strokeStyle='rgba(255,213,79,.55)'; ctx.lineWidth=ch.beamWidth||16; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(entity.x+dirX*ch.range,entity.y+dirY*ch.range); ctx.stroke();
+  } else if(ch.attackType==='mayin'){
+    const throwDist = 60+Math.min(dist||60,120)*1.2;
+    const lx=entity.x+dirX*throwDist, ly=entity.y+dirY*throwDist;
+    ctx.strokeStyle='rgba(124,179,66,.7)'; ctx.lineWidth=2; ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(lx,ly); ctx.stroke();
+    ctx.setLineDash([]); ctx.strokeStyle='rgba(124,179,66,.9)';
+    ctx.beginPath(); ctx.arc(lx,ly,ch.mineRadius,0,Math.PI*2); ctx.stroke();
+  } else if(ch.attackType==='titresim'){
+    ctx.strokeStyle='rgba(77,208,225,.7)'; ctx.lineWidth=2; ctx.setLineDash([4,6]);
+    ctx.beginPath(); ctx.arc(entity.x,entity.y,ch.range,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+  } else {
+    ctx.fillStyle='rgba(255,255,255,.16)';
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y);
+    ctx.arc(entity.x,entity.y, (ch.range||480)*0.5, angle-0.14, angle+0.14);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(entity.x+dirX*70,entity.y+dirY*70); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawSuperAimIndicator(entity, ch, dirX, dirY){
+  const angle = Math.atan2(dirY,dirX);
+  ctx.save();
+  if(ch.attackType==='sniper'){
+    ctx.strokeStyle='rgba(128,222,234,.9)'; ctx.lineWidth=8; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(entity.x+dirX*(ch.range||1000),entity.y+dirY*(ch.range||1000)); ctx.stroke();
+  } else if(ch.attackType==='shotgun'){
+    ctx.fillStyle='rgba(255,241,118,.3)';
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y);
+    ctx.arc(entity.x,entity.y,(ch.range||260)*0.75, angle-0.58, angle+0.58);
+    ctx.closePath(); ctx.fill();
+  } else if(ch.attackType==='bomb'){
+    [-0.4,0,0.4].forEach(off=>{
+      const a = angle+off, lx=entity.x+Math.cos(a)*170, ly=entity.y+Math.sin(a)*170;
+      ctx.strokeStyle='rgba(255,183,77,.75)'; ctx.lineWidth=2; ctx.setLineDash([5,5]);
+      ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(lx,ly); ctx.stroke();
+      ctx.setLineDash([]); ctx.strokeStyle='rgba(255,183,77,.9)';
+      ctx.beginPath(); ctx.arc(lx,ly,(ch.splashRadius||75)*1.15,0,Math.PI*2); ctx.stroke();
+    });
+  } else if(ch.attackType==='dash'){
+    ctx.fillStyle='rgba(142,36,170,.3)';
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y);
+    ctx.arc(entity.x,entity.y,(ch.dashDistance||230)*1.9, angle-0.16, angle+0.16);
+    ctx.closePath(); ctx.fill();
+  } else if(ch.attackType==='frost'){
+    ctx.strokeStyle='rgba(179,229,252,.85)'; ctx.lineWidth=3; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.arc(entity.x,entity.y,190,0,Math.PI*2); ctx.stroke();
+  } else if(ch.attackType==='poison'){
+    ctx.strokeStyle='rgba(174,213,129,.85)'; ctx.lineWidth=3; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.arc(entity.x,entity.y,190,0,Math.PI*2); ctx.stroke();
+  } else if(ch.attackType==='lazer'){
+    ctx.strokeStyle='rgba(255,241,118,.7)'; ctx.lineWidth=(ch.beamWidth||16)*1.6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(entity.x+dirX*(ch.range||520)*1.4,entity.y+dirY*(ch.range||520)*1.4); ctx.stroke();
+  } else if(ch.attackType==='mayin'){
+    [-0.5,0,0.5].forEach(off=>{
+      const a=angle+off, lx=entity.x+Math.cos(a)*140, ly=entity.y+Math.sin(a)*140;
+      ctx.strokeStyle='rgba(124,179,66,.9)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(lx,ly,(ch.mineRadius||85)*1.25,0,Math.PI*2); ctx.stroke();
+    });
+  } else if(ch.attackType==='titresim' || ch.attackType==='itis'){
+    ctx.strokeStyle='rgba(77,208,225,.85)'; ctx.lineWidth=3; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.arc(entity.x,entity.y,(ch.range||170)*1.7,0,Math.PI*2); ctx.stroke();
+  } else {
+    ctx.strokeStyle='rgba(255,152,0,.85)'; ctx.lineWidth=3;
+    [0,45,90,135,180,225,270,315].forEach(deg=>{
+      const rad=angle+deg*Math.PI/180;
+      ctx.beginPath(); ctx.moveTo(entity.x,entity.y); ctx.lineTo(entity.x+Math.cos(rad)*70,entity.y+Math.sin(rad)*70); ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+function drawEntity(e, isPlayer, isAlly, isRemote){
+  const hidden = !isPlayer && !isAlly && !isRemote && isHiddenFrom(e, player);
+  if(hidden) return;
+  const selfHidden = isPlayer && isInBush(player) && !touchControls.isAiming;
+  ctx.save();
+  ctx.globalAlpha = selfHidden ? 0.45 : 1;
+  const flashing = Date.now() < (e.invulnUntil||0) && Math.floor(Date.now()/80)%2===0;
+  ctx.fillStyle = flashing ? '#ffffff' : e.color;
+  ctx.beginPath(); ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle='white'; ctx.font="bold 12px 'Baloo 2', sans-serif"; ctx.textAlign='center';
+  ctx.fillText(isPlayer?(playerName||currentChar.name):(e.name||'Eş'), e.x, e.y-e.radius-6);
+  if(!isPlayer){
+    const w=e.radius*2;
+    ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(e.x-w/2, e.y-e.radius-18, w, 4);
+    ctx.fillStyle='#4caf50'; ctx.fillRect(e.x-w/2, e.y-e.radius-18, w*Math.max(0,e.hp/e.maxHp), 4);
+  }
+}
+function draw(){
+  updateCamera();
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.save();
+  ctx.translate(canvas.width/2-camera.x, canvas.height/2-camera.y);
+
+  ctx.fillStyle=currentMap.bg; ctx.fillRect(0,0,worldWidth,worldHeight);
+  ctx.strokeStyle=currentMap.grid; ctx.lineWidth=1;
+  for(let x=0;x<=worldWidth;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,worldHeight); ctx.stroke(); }
+  for(let y=0;y<=worldHeight;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(worldWidth,y); ctx.stroke(); }
+
+  if(currentMode.id==='GEMGRAB'){
+    ctx.save(); ctx.strokeStyle='rgba(51,217,178,.5)'; ctx.lineWidth=3; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.arc(worldWidth/2,worldHeight/2,90,0,Math.PI*2); ctx.stroke(); ctx.restore();
+  }
+  if(currentMode.id==='BRAWLBALL' && topGoal){
+    ctx.fillStyle='rgba(33,150,243,.35)'; ctx.fillRect(topGoal.x,0,topGoal.w,topGoal.h);
+    ctx.fillStyle='rgba(255,82,82,.35)'; ctx.fillRect(bottomGoal.x,worldHeight-bottomGoal.h,bottomGoal.w,bottomGoal.h);
+  }
+
+  drawBushes(); drawGems();
+
+  particles.forEach(p=>{ ctx.save(); ctx.globalAlpha=p.alpha; ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill(); ctx.restore(); });
+
+  if(currentMode.id==='BRAWLBALL' && ball){
+    if(ball.heldBy){
+      ctx.save(); ctx.shadowColor='rgba(255,203,61,.9)'; ctx.shadowBlur=16;
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#ffcb3d'; ctx.lineWidth=3; ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#333'; ctx.lineWidth=2; ctx.stroke();
+    }
+  }
+
+  bullets.forEach(b=>{ ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); });
+  enemyBullets.forEach(b=>{ ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); });
+  incomingBullets.forEach(b=>{ ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); });
+  bombs.forEach(bm=>{ const scale=1+Math.sin(Math.min(1,bm.elapsed/bm.travelTime)*Math.PI)*0.4; ctx.fillStyle='#5d4037'; ctx.beginPath(); ctx.arc(bm.x,bm.y,9*scale,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#3e2723'; ctx.lineWidth=2; ctx.stroke(); });
+  mines.forEach(m=>{
+    if(m.owner !== player) return; // sadece mayını/tuzağı döşeyen kişi görebilir
+    const armed = Date.now()>=m.armAt;
+    const pulse = 1+Math.sin(Date.now()/150)*0.18;
+    const baseColor = m.persistent ? '#ab47bc' : '#7cb342';
+    const darkColor = m.persistent ? '#4a148c' : '#33691e';
+    ctx.fillStyle = armed?baseColor:'#9e9e9e';
+    ctx.beginPath(); ctx.arc(m.x,m.y,15*pulse,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = armed?darkColor:'#616161'; ctx.lineWidth=3; ctx.stroke();
+    ctx.save(); ctx.globalAlpha=0.25; ctx.strokeStyle=baseColor; ctx.lineWidth=2; ctx.setLineDash(m.persistent?[2,4]:[5,5]);
+    ctx.beginPath(); ctx.arc(m.x,m.y,m.radius,0,Math.PI*2); ctx.stroke(); ctx.restore();
+  });
+  beams.forEach(bm=>{
+    const alpha = Math.max(0, Math.min(1, bm.ttl/220));
+    ctx.save(); ctx.globalAlpha = alpha;
+    if(bm.type==='beam'){
+      ctx.strokeStyle = bm.color; ctx.lineWidth = bm.width||10; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(bm.x1,bm.y1); ctx.lineTo(bm.x2,bm.y2); ctx.stroke();
+    } else if(bm.type==='ring'){
+      ctx.strokeStyle = bm.color; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(bm.x,bm.y,bm.radius*(1-alpha*0.3),0,Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
+  });
+
+  enemies.forEach(e=>{
+    if(e.respawnAt && Date.now()<e.respawnAt) return;
+    if(isHiddenFrom(e,player)) return;
+    ctx.fillStyle=e.color;
+    const outlineColor = (currentMode.id==='ELIMINATION' && e.teamId) ? (TEAM_COLORS[e.teamId]||'#c62828') : '#c62828';
+    const isMeleeStyle = e.type==='baller' ? false : (e.charData && e.charData.attackType==='dash');
+    if(!isMeleeStyle){
+      ctx.save(); ctx.translate(e.x,e.y); ctx.beginPath();
+      for(let k=0;k<6;k++){ const a=k*Math.PI/3; const px=Math.cos(a)*e.radius, py=Math.sin(a)*e.radius; k===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
+      ctx.closePath(); ctx.fill(); ctx.strokeStyle=outlineColor; ctx.lineWidth=3; ctx.stroke(); ctx.restore();
+    } else {
+      ctx.beginPath(); ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill(); ctx.strokeStyle=outlineColor; ctx.lineWidth=3; ctx.stroke();
+    }
+    if(e.charData){
+      ctx.fillStyle='white'; ctx.font="bold 10px 'Baloo 2', sans-serif"; ctx.textAlign='center';
+      ctx.fillText(e.charData.name, e.x, e.y-e.radius-12);
+    }
+    const w=e.radius*2;
+    ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(e.x-w/2,e.y-e.radius-8,w,4);
+    ctx.fillStyle='#4caf50'; ctx.fillRect(e.x-w/2,e.y-e.radius-8,w*Math.max(0,e.hp/e.maxHp),4);
+    if(currentMode.id==='GEMGRAB' && e.gemsCarried>0){
+      ctx.fillStyle='#33d9b2'; ctx.font="bold 10px 'Baloo 2', sans-serif"; ctx.textAlign='center';
+      ctx.fillText('💎'+e.gemsCarried, e.x, e.y+e.radius+14);
+    }
+  });
+
+  if(currentMode.id==='ONLINE' && remotePlayer) drawEntity(remotePlayer,false,false,true);
+  allies.forEach(ally=>{ if(ally.hp>0) drawEntity(ally,false,true,false); });
+
+  if(touchControls.isAiming){
+    if(currentMode.id==='BRAWLBALL' && ball && ball.heldBy===player){
+      const power = 9 + Math.min(touchControls.aimDist||60,120)*0.07;
+      ctx.save();
+      ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=3; ctx.setLineDash([6,5]);
+      ctx.beginPath(); ctx.moveTo(player.x,player.y);
+      ctx.lineTo(player.x+touchControls.aimDirX*power*14, player.y+touchControls.aimDirY*power*14);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.beginPath(); ctx.arc(player.x+touchControls.aimDirX*power*14, player.y+touchControls.aimDirY*power*14, 8,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    } else {
+      drawAimIndicator(player, currentChar, touchControls.aimDirX, touchControls.aimDirY, touchControls.aimDist);
+    }
+  }
+  if(touchControls.superAiming) drawSuperAimIndicator(player, currentChar, touchControls.superDirX, touchControls.superDirY);
+
+  drawEntity(player, true, false, false);
+  drawWalls();
+
+  ctx.restore();
+
+  /* ---- screen-space UI: floating move/shoot joysticks + fixed super ---- */
+  if(touchControls.moveTouchId!==null){
+    const mb = touchControls.moveBase;
+    ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(mb.x,mb.y,52,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.6)';
+    ctx.beginPath(); ctx.arc(mb.x+touchControls.moveDir.x*50, mb.y+touchControls.moveDir.y*50,20,0,Math.PI*2); ctx.fill();
+  }
+
+  if(touchControls.shootTouchId!==null){
+    const sb = touchControls.shootBase;
+    ctx.strokeStyle='rgba(255,235,59,.35)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(sb.x,sb.y,52,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(255,235,59,.6)';
+    const sKnobDist = Math.min(touchControls.aimDist,50);
+    ctx.beginPath(); ctx.arc(sb.x+touchControls.aimDirX*sKnobDist, sb.y+touchControls.aimDirY*sKnobDist,20,0,Math.PI*2); ctx.fill();
+  }
+
+  const spb = superBasePos();
+  const charged = player.superCharge>=player.maxSuper;
+  ctx.strokeStyle = charged ? 'rgba(255,152,0,.75)' : 'rgba(255,255,255,.25)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(spb.x,spb.y,44,0,Math.PI*2); ctx.stroke();
+  if(touchControls.superTouchId!==null){
+    ctx.fillStyle='rgba(255,152,0,.85)';
+    ctx.beginPath(); ctx.arc(spb.x+touchControls.superDirX*32, spb.y+touchControls.superDirY*32,16,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle = charged ? 'rgba(255,152,0,.5)' : 'rgba(255,255,255,.15)';
+    ctx.beginPath(); ctx.arc(spb.x,spb.y,16,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function gameLoop(){ update(); if(gameState==='PLAYING' && !isPortrait()){ updateUI(); draw(); } requestAnimationFrame(gameLoop); }
+gameLoop();
+</script>
+</body>
+</html>
